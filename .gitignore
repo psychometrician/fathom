@@ -170,4 +170,9 @@ fathom_*.tar.gz
 *.Rcheck/
 py-pkg/fathom/dist/
 py-pkg/fathom/*.egg-info/
+# `python -m build` leaves a staging tree here, and `setup.py` copies the ENGINE
+# into it — so this directory holds a 1.2 MB binary that the allowlist would
+# otherwise publish, because `!/py-pkg/` un-ignores everything beneath it. Caught
+# on the first wheel build, staged and not yet committed.
+py-pkg/fathom/build/
 r-pkg/fathom/tools/rust/

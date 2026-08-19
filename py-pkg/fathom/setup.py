@@ -1,0 +1,140 @@
+"""Put the engine inside the wheel.
+
+**This is what makes an installed copy self-contained.** `binary()` asks for
+``fathom/bin/fathom`` before it asks the ``PATH``, and nothing else in the
+package ever creates that file, so without this hook the lookup falls through to
+a development checkout: fine on the machine that built it, useless anywhere else.
+
+Three things this has to get right, and the obvious version of each is wrong.
+
+**The build happens in an isolated copy of the source.** ``python -m build`` and
+``uv build`` both copy the project to a temporary tree first, and the engine is
+not in that copy, because ``bin/`` is gitignored and not part of the sdist. So
+the engine is found by walking up from *this file's* real location rather than
+from the working directory, and ``FATHOM_BIN`` overrides that for a build
+running somewhere else entirely.
+
+**A wheel carrying a binary is not pure Python.** Left alone, setuptools tags it
+``py3-none-any``, which tells every other platform on earth that the wheel is
+theirs. It is not: it holds one Mach-O or ELF executable. Declaring the
+distribution binary is what makes the tag name the platform it was built for.
+
+**The engine goes into the BUILT tree, not the source tree.** The obvious route —
+drop it in ``fathom/bin/`` and let ``package_data`` collect it — broke for the
+sibling without a line of its packaging changing: the build backend is installed
+fresh and unpinned into every isolated build, and a newer setuptools began
+refusing files under a directory it reads as an undeclared package. Five wheels
+built green one week and engine-less the next. A file placed directly in
+``build_lib`` is in the wheel by construction, whatever the collector thinks.
+
+god's copy of this file is the original and its comments are the record of what
+went wrong; this one differs only in the names and in carrying that history
+forward rather than rediscovering it.
+"""
+
+import os
+import shutil
+from pathlib import Path
+
+from setuptools import setup
+from setuptools.command.build_py import build_py
+from setuptools.dist import Distribution
+
+try:  # setuptools >= 70 moved it; older installs still have the wheel package
+    from setuptools.command.bdist_wheel import bdist_wheel
+except ImportError:  # pragma: no cover - depends on the build environment
+    from wheel.bdist_wheel import bdist_wheel
+
+HERE = Path(__file__).resolve().parent
+
+# What the engine is called on this machine. `fathom/__init__.py` decides the
+# same thing for the same reason, and the two have to agree: this is the name
+# the wheel packs, and that is the name the installed package looks for.
+EXE = "fathom.exe" if os.name == "nt" else "fathom"
+
+
+def engine() -> Path:
+    """The built engine, or a message naming the command that makes one."""
+    named = os.environ.get("FATHOM_BIN", "")
+    if named and Path(named).is_file():
+        return Path(named)
+
+    # Climbed rather than counted, which is what both bindings do at run time.
+    for directory in (HERE, *HERE.parents):
+        for profile in ("release", "debug"):
+            candidate = directory / "target" / profile / EXE
+            if candidate.is_file():
+                return candidate
+
+    found = shutil.which(EXE)
+    if found:
+        return Path(found)
+
+    raise SystemExit(
+        "fathom: the wheel carries the engine, and there is no engine to carry.\n"
+        "  Build it first:   cargo build --release\n"
+        "  Or point at one:  FATHOM_BIN=/path/to/fathom python -m build"
+    )
+
+
+class BuildWithEngine(build_py):
+    def run(self) -> None:
+        super().run()
+        source = engine()
+        destination = Path(self.build_lib) / "fathom" / "bin"
+        destination.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(source, destination / EXE)
+        (destination / EXE).chmod(0o755)
+        print(f"fathom: carrying the engine from {source}")
+
+
+class BinaryDistribution(Distribution):
+    """A distribution that says so.
+
+    ``root_is_pure = False`` alone stopped being enough for the sibling: a newer
+    setuptools reads a distribution with no extension modules as pure anyway, and
+    files a pure build under ``.data/purelib/`` inside the wheel instead of at
+    its root. Installs still worked, but every check that looks for
+    ``fathom/bin/fathom`` at the root of the archive stopped finding it.
+    Declaring the distribution binary here is the documented way to say what this
+    wheel is, and it puts the tree back at the root for old and new setuptools
+    alike.
+    """
+
+    def has_ext_modules(self) -> bool:
+        return True
+
+
+class PlatformWheel(bdist_wheel):
+    def finalize_options(self) -> None:
+        super().finalize_options()
+        self.root_is_pure = False
+
+    def get_tag(self):
+        """One wheel per platform, not one per platform *and* Python version.
+
+        `root_is_pure = False` alone produces `cp314-cp314-macosx_...`, because
+        setuptools assumes an impure wheel holds a compiled extension bound to
+        one interpreter. This one holds a standalone executable that any Python
+        can run, so the interpreter tags go back to `py3-none` and a single file
+        serves every 3.x on that platform.
+
+        **The tag a release needs is not the one the build machine reports**, so
+        `FATHOM_WHEEL_PLAT` overrides it. Two cases need that and neither is
+        exotic. A Linux build reports a bare `linux_x86_64`, which PyPI rejects
+        outright; the wheel has to claim a `manylinux` tag naming the oldest
+        glibc it will run against. And a cross-compiled macOS wheel must claim
+        the architecture of the *binary it carries* rather than the runner's, or
+        it installs on the wrong machines and refuses the right ones.
+
+        Unset, this is the local build a developer wants: the tag names the
+        machine, because the engine inside was built there.
+        """
+        _python, _abi, platform = super().get_tag()
+        return "py3", "none", os.environ.get("FATHOM_WHEEL_PLAT") or platform
+
+
+setup(
+    cmdclass={"build_py": BuildWithEngine, "bdist_wheel": PlatformWheel},
+    distclass=BinaryDistribution,
+)

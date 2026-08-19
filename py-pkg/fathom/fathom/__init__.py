@@ -64,12 +64,25 @@ class Report(str):
         return str(self)
 
 
-def binary(error: bool = True) -> str | None:
-    """Locate the fathom binary.
+# What the engine is called here. `setup.py` decides the same thing for the same
+# reason and the two have to agree: that is the name the wheel packs, and this is
+# the name that looks for it. A Windows wheel built under one spelling and read
+# under the other installs perfectly and then cannot find the engine it carries.
+_EXE = "fathom.exe" if os.name == "nt" else "fathom"
 
-    Three places, in order, and the order is the point: an explicit override
-    always wins, an installed binary is next, and the development build is last
-    so that working inside the project needs no configuration.
+
+def binary(error: bool = True) -> str | None:
+    """Locate the fathom engine.
+
+    Four places, in order, and **the R binding resolves the same way** — the
+    order is a contract between the two, not a preference of either.
+
+    An explicit override always wins. A DEVELOPMENT BUILD outranks the bundled
+    copy, because the engine inside a wheel is exactly as old as that wheel;
+    preferring it is how a harness spends a day measuring a stale engine while
+    every check passes. The bundled engine is the installed package's own
+    answer. The `PATH` is last: a `fathom` on it has no reason to match this
+    copy of the binding.
     """
     override = os.environ.get("FATHOM_BIN", "")
     if override:
@@ -82,23 +95,34 @@ def binary(error: bool = True) -> str | None:
             )
         return override
 
-    installed = shutil.which("fathom")
-    if installed:
-        return installed
-
     dev = _dev_binary()
     if dev is not None:
         return str(dev)
 
+    # **This is what makes an installed copy self-contained**, and nothing else
+    # in the package ever creates that file: `setup.py` puts it there while the
+    # wheel is built. Without this branch the lookup falls through to a
+    # development checkout, which is fine on the machine that built it and
+    # useless anywhere else.
+    bundled = Path(__file__).resolve().parent / "bin" / _EXE
+    if bundled.is_file():
+        return str(bundled)
+
+    installed = shutil.which(_EXE)
+    if installed:
+        return installed
+
     if not error:
         return None
     raise FathomError(
-        "cannot find the `fathom` binary. It is looked for in three places:\n"
+        "cannot find the `fathom` engine. It is looked for in four places:\n"
         "  1. $FATHOM_BIN, if set\n"
-        "  2. `fathom` on your PATH\n"
-        "  3. target/release/fathom, in this directory or any above it\n"
-        "Build it with `cargo build --release` from the project root, or set "
-        "FATHOM_BIN to a copy you already have."
+        "  2. target/release/fathom, in this directory or any above it\n"
+        "  3. bundled inside the installed package\n"
+        "  4. `fathom` on your PATH\n"
+        "An installed package carries its own engine. In a checkout, build one "
+        "with `cargo build --release` from the project root, or set FATHOM_BIN "
+        "to a copy you already have."
     )
 
 

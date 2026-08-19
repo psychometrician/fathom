@@ -1,22 +1,50 @@
 # The Python binding. NOT the environment — the eight comparison tools live in
 # the pyproject.toml at the project root, which is deliberately not a package.
 # This one is the package, and it has no dependencies at all: it invokes the
-# `fathom` binary as a subprocess and reads what it prints.
+# `fathom` engine as a subprocess and reads what it prints.
+
+# **setuptools rather than hatchling, and the reason is `setup.py`.** The wheel
+# has to carry the engine, which means a build hook that copies a file into the
+# built tree and a distribution that declares itself binary so the wheel is
+# tagged for the platform it was built on. `setup.py` beside this file does
+# both, in the sibling's own words, and it needs setuptools to run.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "fathom"
+# **The distribution name and the import name are independent, and here they
+# differ.** `fathom` was taken on PyPI in 2011 by an unrelated database
+# inspection library — eight releases, none since 2011-06-16, and a home page on
+# Google Code, which shut down in 2016. A PEP 541 request for an abandoned name
+# is the route to `fathom` itself; until one succeeds this ships as
+# `fathom-json`.
+#
+# **Every example, every chapter and every import says `fathom` regardless**, so
+# taking the name later changes this one line and the `pip install` sentence in
+# the two READMEs. Nothing else moves, which is why publishing now costs nothing.
+#
+# The sibling hit exactly this and ships as `grammar-of-data` for the same
+# reason.
+name = "fathom-json"
 version = "0.0.1"
 description = "See what is in a JSON document before you parse it"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"
-authors = [{ name = "psychometrician", email = "psychometrician@gmail.com" }]
+authors = [{ name = "psychometrician" }]
 keywords = ["json", "ndjson", "explore", "schema", "rectangling"]
 dependencies = []
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+[project.urls]
+Homepage = "https://github.com/psychometrician/fathom"
+Documentation = "https://psychometrician.github.io/fathom-book/"
+Issues = "https://github.com/psychometrician/fathom/issues"
 
-[tool.hatch.build.targets.wheel]
+[tool.setuptools]
 packages = ["fathom"]
+
+# `bin/` holds the engine and is written into the BUILT tree by `setup.py`, never
+# into this source tree, so there is deliberately no package-data entry for it.
+# That route is the one that broke for the sibling when a newer setuptools began
+# refusing files under a directory it read as an undeclared package.
