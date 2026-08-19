@@ -8,11 +8,12 @@ Description: One verb that describes an unknown JSON document: whether it is
     sound, what shapes it holds, and what one row could be, with each candidate
     priced. Output is proportional to the structure rather than to the data, so
     a 912 MB file and a 12 KB file produce descriptions of similar size. This
-    package is a thin wrapper around the 'fathom' command-line binary, which it
-    invokes as a subprocess; see SystemRequirements.
+    package is a thin wrapper around the 'fathom' command-line engine, which it
+    invokes as a subprocess. The engine is compiled and bundled into the package
+    at install time, so an installed copy is self-contained.
 License: Apache License (>= 2)
 Encoding: UTF-8
-SystemRequirements: fathom (the command-line binary; see
-    https://github.com/ — not yet published. Build it from the project's
-    'fathom-cli' crate with 'cargo build --release'.)
-RoxygenNote: 0.0.0.9000
+SystemRequirements: Cargo (Rust's package manager), rustc
+URL: https://github.com/psychometrician/fathom,
+    https://psychometrician.github.io/fathom-book/
+BugReports: https://github.com/psychometrician/fathom/issues

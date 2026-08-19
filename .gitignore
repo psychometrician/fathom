@@ -29,10 +29,12 @@
 !/fathom-core/
 !/fathom-cli/
 
-# The two bindings. Neither has a dependency, and each is a thin wrapper that
-# finds the binary and hands back its bytes.
-!/r/
-!/python/
+# The two bindings, laid out the way the siblings lay theirs out — the
+# r-universe registry addresses a package by `subdir`, and `r-pkg/<name>` is the
+# shape it expects. Neither package has a dependency, and each is a thin wrapper
+# that finds the binary and hands back its bytes.
+!/r-pkg/
+!/py-pkg/
 
 # The corpus is the instrument. Real documents only, graded the same way, with
 # provenance and a date — a claim nobody can re-run is not evidence.
@@ -134,7 +136,7 @@ target/
 
 # The engine, copied into the R package at install time by `configure`. It is
 # built output that happens to live inside a source tree.
-r/inst/bin/
+r-pkg/fathom/inst/bin/
 
 # The rendered book, and the caches that make a re-render fast. The `.qmd`
 # sources and the theme are the artifact; `_book/` is derived from them plus the
@@ -166,5 +168,6 @@ book/**/*_files/
 # for refreshing it.
 fathom_*.tar.gz
 *.Rcheck/
-python/dist/
-python/*.egg-info/
+py-pkg/fathom/dist/
+py-pkg/fathom/*.egg-info/
+r-pkg/fathom/tools/rust/

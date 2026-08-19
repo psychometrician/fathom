@@ -19,7 +19,24 @@
 #'   which is what a test harness wants.
 #' @return The path to the binary, or `NULL`.
 #' @export
+# What the engine is called here. `configure` decides the same thing for the
+# same reason and the two have to agree: that is the name the install writes
+# into `inst/bin/`, and this is the name that looks for it. A Windows install
+# under one spelling and a lookup under the other succeeds at every step and
+# then cannot find the engine it is carrying.
+fathom_exe <- function() {
+  if (identical(.Platform$OS.type, "windows")) "fathom.exe" else "fathom"
+}
+
 fathom_binary <- function(error = TRUE) {
+  # **The order is the contract, and the Python binding resolves the same way.**
+  #
+  # An explicit `FATHOM_BIN` always wins. A DEVELOPMENT BUILD outranks the
+  # bundled copy, because `inst/bin/` is written at install time and then
+  # lingers exactly as old as that install — preferring it is how a harness
+  # spends a day measuring last week's engine while every check passes. The
+  # bundled engine is the installed package's own answer and comes next. PATH
+  # is last: a `fathom` on PATH has no reason to match this copy of the binding.
   override <- Sys.getenv("FATHOM_BIN", unset = "")
   if (nzchar(override)) {
     # An override that does not exist is an error rather than a fallback. It was
@@ -32,17 +49,25 @@ fathom_binary <- function(error = TRUE) {
     return(override)
   }
 
-  installed <- unname(Sys.which("fathom"))
-  if (nzchar(installed)) return(installed)
-
   dev <- fathom_dev_binary()
   if (!is.null(dev)) return(dev)
 
+  # **This is what makes an installed copy self-contained**, and nothing else in
+  # the package creates that file: `configure` puts it there at install time.
+  # Without this branch the lookup falls through to a development checkout,
+  # which is fine on the machine that built it and useless anywhere else.
+  bundled <- system.file("bin", fathom_exe(), package = "fathom")
+  if (nzchar(bundled) && file.exists(bundled)) return(bundled)
+
+  installed <- unname(Sys.which(fathom_exe()))
+  if (nzchar(installed)) return(installed)
+
   if (!error) return(NULL)
-  stop("cannot find the `fathom` binary. It is looked for in three places:\n",
+  stop("cannot find the `fathom` engine. It is looked for in four places:\n",
        "  1. $FATHOM_BIN, if set\n",
-       "  2. `fathom` on your PATH\n",
-       "  3. target/release/fathom, in this directory or any above it\n",
+       "  2. target/release/fathom, in this directory or any above it\n",
+       "  3. bundled inside the installed package, by `configure`\n",
+       "  4. `fathom` on your PATH\n",
        "Build it with `cargo build --release` from the project root, or set ",
        "FATHOM_BIN to a copy you already have.", call. = FALSE)
 }

@@ -374,7 +374,7 @@ def main():
         # the code and installing tests the package — NAMESPACE, exports and
         # the S3 method registration included.
         install = subprocess.run(
-            ["R", "CMD", "INSTALL", f"--library={lib}", str(ROOT / "r")],
+            ["R", "CMD", "INSTALL", f"--library={lib}", str(ROOT / "r-pkg" / "fathom")],
             capture_output=True, text=True, env=env)
         if install.returncode != 0:
             print("  R CMD INSTALL failed:")
@@ -386,7 +386,7 @@ def main():
              *[str(d) for d in docs]],
             check=True, capture_output=True, env=env)
         subprocess.run(
-            [sys.executable, "-c", PY_DRIVER, str(ROOT / "python"), str(py_out),
+            [sys.executable, "-c", PY_DRIVER, str(ROOT / "py-pkg" / "fathom"), str(py_out),
              *[str(d) for d in docs]],
             check=True, capture_output=True, env=env)
 
@@ -422,7 +422,7 @@ def main():
                 (R_ROWS_DRIVER, r_rows,
                  ["Rscript", "-e", R_ROWS_DRIVER, "--args", str(lib), str(r_rows)]),
                 (PY_ROWS_DRIVER, py_rows,
-                 [sys.executable, "-c", PY_ROWS_DRIVER, str(ROOT / "python"), str(py_rows)]),
+                 [sys.executable, "-c", PY_ROWS_DRIVER, str(ROOT / "py-pkg" / "fathom"), str(py_rows)]),
             ):
                 done = subprocess.run(runner + specs, capture_output=True, env=env)
                 if done.returncode != 0:
@@ -487,7 +487,7 @@ def main():
 
         for runner in (
             ["Rscript", "-e", R_CHAIN_DRIVER, "--args", str(lib), str(r_ch)],
-            [sys.executable, "-c", PY_CHAIN_DRIVER, str(ROOT / "python"), str(py_ch)],
+            [sys.executable, "-c", PY_CHAIN_DRIVER, str(ROOT / "py-pkg" / "fathom"), str(py_ch)],
         ):
             done = subprocess.run(runner + chain_specs, capture_output=True, env=env)
             if done.returncode != 0:
