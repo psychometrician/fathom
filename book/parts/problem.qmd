@@ -1,0 +1,18 @@
+# The problem
+
+With rectangular data you always know how to start. A data frame has already
+answered "what is a row" before you arrive, so the same verbs work on every
+table you will ever meet. Technique transfers. That is why those verbs are
+worth learning once.
+
+JSON never answers that question. Every document makes you work it out from
+scratch, which is why the code you wrote for one file is useless on the next
+one, even when the two are nominally the same kind of thing.
+
+That is not a skill gap. It is a property of the format, and it is why this is
+a different animal from every other data-cleaning problem.
+
+This part is about the document rather than the tool. The first chapter is why
+JSON defeats technique, in the author's own account. The second names the
+properties that make one document harder than another, as separate axes — and
+records which of them turned out not to be axes at all.

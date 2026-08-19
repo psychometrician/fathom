@@ -1,0 +1,112 @@
+---
+date-modified: "`r sub(' 0', ' ', format(Sys.Date(), '%B %d, %Y'))`"
+---
+
+# Preface {.unnumbered}
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+::: {.fathom-slogan}
+Fathom first. Then parse.
+:::
+
+**To [fathom]{.word}** something is to measure how deep it goes, and to finally
+understand it. Both meanings are the job.
+
+fathom is one way of **seeing** what is in a JSON document and **extracting**
+what you want from it, that works the same in R and in Python, is intuitive
+enough to read aloud, and stays learned. It is the first thing you reach for,
+not the last: you point it at a document you have never seen and it tells you
+what you are dealing with, and whether the file is even sound.
+
+## This book documents an investigation that grew a package {.unnumbered}
+
+Most software books describe a thing that exists. This one describes a question
+being answered — and the answer arrived while the book was being written.
+
+The question was whether there is a capturable pattern underneath JSON work at
+all: whether the code you write for one document can ever transfer to the next,
+or whether every document really is its own problem. **Had the finding been that
+there is no pattern, that would have been a real result and nothing would have
+been built.** It went the other way — fold the siblings, partition on a
+discriminator, name the keys that are data, price the candidate rows — so there
+is now one Rust core, one command line over it, and thin R and Python packages
+speaking the same seven words, differing by the pipe alone and neither carrying
+a dependency.
+
+So this book is written under an unusual constraint, and it is the constraint
+that makes it worth reading:
+
+> **A claim in these pages either names the file and the day it was measured,
+> or it is marked as unsettled. There is no third category.**
+
+Chapters that describe something built show it running. Chapters that describe
+something still open say so in a box like this one, and you will meet several:
+
+::: {.unsettled}
+**Unsettled.** What phase 1 settled is that a pattern exists. The bar that
+replaced it is harder, and this repository cannot clear it alone: **is the
+fathoming enjoyable?** That needs a reader with a document nobody here has
+seen. `README.md` states the two limits found so far.
+:::
+
+## Every number in this book is computed, not typed {.unnumbered}
+
+The repository this book documents has a rule: **one place owns each fact.** It
+has that rule because it has been burned five times by the same failure — a
+number written in two places and going stale in one, so that two documents
+disagreed and both looked authoritative.
+
+A book is the most tempting possible sixth place. It wants to say *"336 copies,
+folded to one shape"* in running prose, and six months later that sentence is a
+lie nobody noticed.
+
+So this book does not say it. It **runs the tool and prints what came back.**
+Here is the whole of a real report, produced while this page was being built:
+
+```{r}
+#| echo: false
+say(probe("corpus/02-hn-thread/source.json"))
+```
+
+That is not a transcript. It is `design/probe.py`, invoked on a real Hacker News
+thread in the repository's corpus, at the moment this page was rendered. A
+chapter here can still be wrong about what a number *means* — that is what
+review is for — but it cannot be wrong about what the number *is*.
+
+## What you need to read it {.unnumbered}
+
+Nothing. No JSON expertise, no Rust, no R and no Python. The book explains the
+document before it explains the tool.
+
+If you want to *run* what you see, you need the repository, `uv` for the Python
+side, R for the R side, and a Rust toolchain for the core. The repository's
+`CLAUDE.md` records exactly what was installed and on what day, because an
+inventory written into a document goes stale like any other number.
+
+## Where it sits beside its siblings {.unnumbered}
+
+fathom is one of three. **gog** is a grammar of graphics, **god** is a grammar
+of data, and the chain is **fathom → god → gog**: a document becomes a table,
+the table is manipulated, the result is drawn.
+
+**fathom is deliberately not a grammar**, and the name says so. Its siblings
+have a kernel, stated laws and a closed vocabulary, and they are named as a pair
+because three initials happened to spell a word. Calling this one
+`go`-something would promise a structure it does not have and may never want.
+
+The hex sticker on this page says the same thing in colour. The three fills are
+measured rather than chosen: in CIELAB, gog's sand is hue 82 and god's slate is
+hue 254, and fathom takes 348 — equidistant at 94 degrees from each, with
+lightness and chroma matched. **Three peers, not a progression.** The
+hexagons behind this page are the same shape and the same rose.
+
+## Who wrote this {.unnumbered}
+
+The thinking, the decisions and every judgement about what counts as evidence
+are the human author's. The models wrote code, ran measurements and put the text
+into English — the way a ghostwritten autobiography is its subject's. A model
+cannot hold a copyright, and the sole author of the work is the human.

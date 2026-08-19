@@ -1,0 +1,16 @@
+# The words
+
+The probe answers *what is in here*. This part is the other half: taking what
+you want out.
+
+Four words so far — `rows`, `first_present`, `take` and `where` — and each one
+had to earn its place against a rule that is deliberately hard to satisfy:
+
+> **A word belongs in fathom only if removing it makes one of the fixed
+> questions unanswerable on at least one corpus file. No word is added without
+> naming the question it answers and the file that proves it.**
+
+Every word in this part is shown in both languages, because **the premise of the
+project is that they read the same**. That is a claim, not a courtesy, and it is
+checked rather than asserted: the two spellings come from two independent
+implementations and a harness diffs what they return on real documents.

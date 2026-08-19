@@ -1,0 +1,64 @@
+---
+title: "The corpus"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+**Real files only.** Toy JSON is hard in ways nobody suffers from, and a tool
+tuned against invented documents is tuned against invented problems. Every entry
+is something that came off a real API, a real export or a real tool.
+
+```{r}
+#| echo: false
+d <- sort(list.dirs(file.path(ROOT, "corpus"), recursive = FALSE))
+info <- data.frame(
+  entry = basename(d),
+  size  = sapply(d, function(p) {
+    f <- file.path(p, "source.json")
+    if (file.exists(f)) format(structure(file.size(f), class = "object_size"),
+                               units = "auto", digits = 0)
+    else "fetch.sh"
+  }),
+  row.names = NULL, check.names = FALSE)
+knitr::kable(info, col.names = c("entry", "source"))
+```
+
+An entry is finished only when all of these are true, and anything less is a
+file somebody downloaded:
+
+- `source.json` is committed, or a `fetch.sh` is, with the file described as it
+  was on the day.
+- Its notes carry provenance with a date, a **measured** number in every grading
+  row that can carry one, and a section saying what the file **disconfirmed**.
+- One attempt file per tool, in both languages, each with its scoring header
+  filled in.
+- An entry in the findings saying what the file changed.
+
+## The disconfirmation rule is the point
+
+That third bullet in the notes — *what this file disconfirmed* — is why the
+corpus is worth having.
+
+**The first file was chosen as a polymorphism specimen and has none.** That is
+worth more than a file which confirmed what somebody already believed, and it is
+only worth anything because the expectation was written down first.
+
+Each of the first three files contradicted something. A later one was chosen
+specifically as the case where an existing describer should finally be right,
+and it dropped the field held by the majority of records. Another was chosen
+because two spellings of one field are its whole point, and a database engine
+silently collided them and returned the other population's data.
+
+## Why a corpus and not a benchmark
+
+A benchmark asks which tool is fastest at a task everyone agrees on. There is no
+agreed task here — that is the problem. The corpus exists to find out whether
+there *is* a capturable pattern underneath, by asking the same questions of
+documents that are as unlike each other as could be found.
+
+Gaps are tracked as deliberately as entries. The one that matters most is
+`scale`: nothing here has ever strained memory, so the axis has never had a
+chance to separate anything.

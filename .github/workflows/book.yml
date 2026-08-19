@@ -1,0 +1,226 @@
+# Render the manual and publish it to https://psychometrician.github.io/fathom-book/
+#
+# The site repository holds *only* the rendered HTML. The book's sources live
+# here beside the oracle, and stay here: every report in the book is produced by
+# running `design/probe.py` against the real corpus while the page is built, so
+# one change to either invalidates every page at once. Splitting them would turn
+# that into a version-matching problem.
+#
+# Ways this can appear to succeed while shipping a broken book, each with a
+# guard below:
+#
+#   * `quarto render` exits 0 with broken links, and writes `WARN:` rather than
+#     `warning:`. The exit code proves nothing, so the log is graded.
+#   * GitHub Pages runs Jekyll, which skips any path beginning with an
+#     underscore. Without `.nojekyll` the stylesheets and the search index go
+#     off every page, and the site still returns 200 while looking broken.
+#   * `book/R/setup.R`'s `fathom()` helper returns the string
+#     `(no binary — run \`cargo build --release\` ...)` when the core is not
+#     built, so a chapter that used it would render a placeholder and exit 0.
+#     There are zero call sites today, which is exactly why this is a guard
+#     rather than a build step nobody would notice breaking.
+#   * A defect can exist only in the output. The rendered HTML is graded here
+#     because every guard that reads `.qmd` is blind to it.
+#
+# Why the whole book, every time: Quarto tracks `.qmd` dependencies, not the
+# probe and not the corpus. A per-chapter render leaves the untouched chapters
+# showing reports the oracle no longer produces.
+#
+# Actions are pinned to commits rather than tags — a tag can be moved to new
+# code by whoever controls the action, and this job ends holding a key that
+# writes to another repository. The tag each pin was taken from is beside it.
+
+name: book
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "book/**"
+      - "design/probe.py"
+      - "corpus/**"
+      - "fathom-core/**"
+      - "fathom-cli/**"
+      - ".github/workflows/book.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One publish at a time, and the newest push wins. The site is a single orphan
+# commit force-pushed over whatever was there, so two concurrent runs would race
+# to be last rather than merge.
+concurrency:
+  group: book
+  cancel-in-progress: true
+
+jobs:
+  book:
+    name: render and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      # Built even though no chapter calls `fathom()` today. `setup.R` degrades
+      # to a placeholder string rather than failing, so the first chapter that
+      # does call it would publish that placeholder silently. Building here and
+      # grading for the string below costs seconds and removes the trapdoor.
+      - name: Build the core
+        run: |
+          cargo build --release -p fathom-cli
+          test -x target/release/fathom
+          ./target/release/fathom --help | head -3
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          use-public-rspm: true
+
+      # The book runs under Quarto's knitr engine. `rmarkdown` is never written
+      # in any chapter and the render dies on the first one without it, because
+      # the knitr engine shells out to it to execute an `{r}` chunk. Neither is
+      # a dependency of the R package, which has none at all.
+      - uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          working-directory: r
+          extra-packages: any::knitr, any::rmarkdown
+
+      - uses: quarto-dev/quarto-actions/setup@8a96df13519ee81fd526f2dfca5962811136661b # v2
+
+      # **`uv` is not optional and not a preference here.** `book/R/setup.R`
+      # invokes the oracle as `system2("uv", c("run", "design/probe.py", ...))`,
+      # so a runner without `uv` on PATH renders a book whose every report is an
+      # error string. `uv run` resolves the project by walking up from where it
+      # starts, which is why the helper sets the working directory to the
+      # repository root first.
+      #
+      # `uv sync` rather than letting the first `uv run` do it: the sync belongs
+      # in a step that can fail loudly, not inside the render's first chunk.
+      - name: The Python side the oracle runs under
+        run: |
+          python3 -m pip install --quiet uv
+          uv sync --quiet
+          uv run design/probe.py corpus/02-hn-thread/source.json | head -3
+
+      # The oracle is frozen and the hash is the promise. A book rendered from a
+      # probe that does not match CLAUDE.md's freeze block is a book reporting
+      # something other than the recorded build, and it would publish without
+      # complaint.
+      # **Conditional, and the skip is announced rather than silent.** The freeze
+      # block lives in `CLAUDE.md`, which is part of the working record and is
+      # not published with this repository. Where it is present this is a real
+      # check; where it is absent, saying so is the honest result — a check that
+      # did not run is not a check that passed, which is the distinction this
+      # project makes everywhere else.
+      - name: The freeze block is telling the truth
+        run: |
+          if [ ! -f CLAUDE.md ]; then
+            echo "CLAUDE.md is not in this repository - the freeze block lives"
+            echo "with the working record. NOT CHECKED here, by design."
+            exit 0
+          fi
+          want=$(grep -oE '^# [0-9a-f]{40}' CLAUDE.md | head -1 | tr -d '# ')
+          got=$(git hash-object design/probe.py)
+          echo "recorded $want"
+          echo "actual   $got"
+          test "$want" = "$got" || { echo "::error::probe.py does not match the freeze block"; exit 1; }
+
+      - name: Render the whole book to HTML
+        working-directory: book
+        shell: bash
+        # `pipefail` because `tee` would otherwise swallow a non-zero exit and
+        # hand the next step a log to grade from a render that died.
+        run: |
+          set -o pipefail
+          quarto render --to html 2>&1 | tee .render.log
+
+      - name: Grade the render log
+        working-directory: book
+        shell: bash
+        # The advice for reading a render by eye is a broad grep for
+        # `warn|error|cannot|fail`. That is right for a person and wrong as an
+        # automatic gate on this book, which prints real reports full of words
+        # like `no duplicate keys` and describes documents that are damaged on
+        # purpose. Quarto's own markers are what a gate can trust.
+        run: |
+          if grep -nE "(^|\[[0-9;]*m)(ERROR|WARN):|^Stack trace:" .render.log; then
+            echo "::error::the render log has complaints (above)"
+            exit 1
+          fi
+          echo "log is clean"
+
+      - name: Grade the rendered HTML
+        working-directory: book
+        shell: bash
+        # **Everything here is a defect that exists only in the output.**
+        run: |
+          test -f _book/index.html || { echo "::error::_book/index.html is missing"; exit 1; }
+
+          grep -q "site_libs" _book/index.html \
+            || { echo "::error::index.html does not reference site_libs"; exit 1; }
+
+          # The placeholder `setup.R` returns when the core is not built. If this
+          # ever fires, the book published a sentence telling the reader to run
+          # cargo instead of the output they came for.
+          if grep -rq "no binary — run" _book/; then
+            echo "::error::a chapter rendered the missing-binary placeholder"
+            grep -rn "no binary — run" _book/ | head
+            exit 1
+          fi
+
+          # An error string where a report should be. `setup.R` runs the oracle
+          # with `stderr = FALSE`, so a failed invocation prints nothing at all
+          # rather than a traceback — an empty report is the shape this takes.
+          if grep -rqE "<pre><code>\s*</code></pre>" _book/; then
+            echo "::error::an empty code block was rendered - a probe call produced nothing"
+            exit 1
+          fi
+
+          # A `###` under a chapter with no `##` above it. Quarto numbers it
+          # `19.0.1`, and `toc-depth: 2` keeps it out of the sidebar as well.
+          if grep -rEq '<h[2-6][^>]*>[^<]*<span class="header-section-number">[0-9]+\.0\.' _book/; then
+            echo "::error::a subsection is numbered N.0.x - it needs a ## above it"
+            exit 1
+          fi
+
+          # An HTML entity inside a code span. Pandoc decodes entities in prose
+          # and leaves them alone in code, so a table cell escaping a pipe to
+          # `&#124;` reaches the reader as those six characters.
+          if grep -rEq '<code>[^<]*&amp;#[0-9]+;' _book/; then
+            echo "::error::an HTML entity is showing inside a code span"
+            exit 1
+          fi
+
+          # Required: Pages runs Jekyll, which skips underscore-prefixed paths,
+          # and Quarto writes its stylesheets and search index into site_libs/.
+          # No render produces this file, and `force_orphan` below replaces the
+          # site wholesale, so it is made here.
+          touch _book/.nojekyll
+          cp LICENSE.md _book/LICENSE.md 2>/dev/null || true
+
+          echo "output looks right ($(du -sh _book | cut -f1))"
+
+      # Cross-repo, so the site is served from `psychometrician/fathom-book` and
+      # this repository keeps its own Pages slot free. A deploy key rather than a
+      # token: it grants write on exactly one repository and nothing else.
+      #
+      # `force_orphan` keeps the site at one commit with no parent. History of
+      # generated output answers no question a reader has, and every probe change
+      # rewrites every report on every page.
+      - name: Publish to the site repository
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4
+        with:
+          deploy_key: ${{ secrets.BOOK_SITE_DEPLOY_KEY }}
+          external_repository: psychometrician/fathom-book
+          publish_branch: main
+          publish_dir: book/_book
+          force_orphan: true
+          # Named rather than defaulted: the action's default resolves to
+          # whoever pushed, so a `workflow_dispatch` run by anyone else would
+          # attribute the book to them.
+          user_name: psychometrician
+          user_email: psychometrician@users.noreply.github.com
+          commit_message: "fathom: Probing JSON — rendered from"

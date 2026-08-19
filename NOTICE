@@ -1,0 +1,110 @@
+fathom — probing JSON
+Copyright 2026 psychometrician
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+--------------------------------------------------------------------------------
+Third-party material included in this work
+--------------------------------------------------------------------------------
+
+**This file cannot say what god's says.** god's NOTICE reads "No third-party
+material is included in this work", and gog's lists two colour palettes. fathom
+commits seventeen real JSON documents that other people made, because its
+method requires them: `corpus/README.md` takes real files only, on the ground
+that toy JSON is hard in ways nobody suffers from.
+
+**The licence above does not, and cannot, re-license any of it.** Apache 2.0
+covers fathom's own code and prose. Everything below keeps the terms it arrived
+with, and a reader who wants to reuse one of these files answers to those terms
+rather than to this repository's.
+
+
+The corpus
+----------
+
+Seventeen documents under `corpus/<nn>-<name>/source.json`, each committed as a
+specimen so that a measurement can be re-run against the exact bytes it was
+made on. Two further entries — `04-gharchive` and `12-agent-trace` — ship a
+`fetch.sh` instead, the first because it is 50 MB and the second because it is
+a transcript of this project's own sessions.
+
+Every entry's `NOTES.md` records the source URL and the day it was fetched.
+That provenance is the authoritative record; this list is a summary.
+
+  Public domain, open-government or explicitly open data
+
+    03-natural-earth      Natural Earth 3.3.0 admin-0 countries. Public domain.
+    09-stripe-openapi     Stripe's own OpenAPI 3 specification, from the
+                          `stripe/openapi` repository.
+    10-wikidata           Wikidata entity Q30. Wikidata's data is released CC0.
+    13-package-lock       Visual Studio Code's `package-lock.json`.
+    14-nyc-311            NYC Open Data, 311 service requests.
+    18-openfda-events     openFDA adverse event reports, a US federal dataset.
+    19-chicago-salaries   Chicago Open Data, city employee salaries.
+
+  Made by a named author, under that author's terms
+
+    05-fhir-bundle        Synthea, a SYNTHETIC patient bundle. No real patient
+                          data is present, which is why this file could be
+                          committed at all.
+    11-jupyter-notebook   Peter Norvig, "Advent of Code 2021", from `pytudes`.
+    16-movie-ratings      Rachael Tatman, "Data Cleaning Challenge", Kaggle
+                          2018, with the accompanying notebook committed as
+                          ground truth.
+    17-openlibrary        OpenLibrary search results, Internet Archive.
+
+  API responses, and the four that most warrant a reader's attention
+
+    01-npm-registry       npm registry metadata for `express`, which carries
+                          that package's own README text.
+    02-hn-thread          336 Hacker News comments, via Algolia. **Each comment
+                          was written by its author and is theirs.**
+    06-espn-qbr           ESPN's NFL quarterback rating endpoint. Sports data,
+                          supplied under ESPN's own terms.
+    07-graphql-introspection  the SpaceX public GraphQL API describing its own
+                          schema.
+    08-open-meteo         Open-Meteo forecast data.
+    15-github-issues      100 issues and pull requests from `pandas-dev/pandas`,
+                          including text written by their authors.
+
+**The last group is user-written or vendor-supplied content redistributed
+verbatim**, and it is listed apart for that reason rather than because anything
+is known to be wrong with it. They are held here as research specimens for a
+tool comparison. If any rightsholder would rather a file were not committed,
+`fetch.sh` is how the corpus already handles a document it cannot keep, and the
+entry can move to that form without losing the measurement.
+
+
+Runtime dependency
+------------------
+
+`flate2`, with the pure-Rust `miniz_oxide` backend, dual-licensed MIT and
+Apache 2.0. It is the core's only runtime dependency; `Cargo.toml` says why a
+decompressor is load-bearing where nothing else is.
+
+Nothing else is linked. **The JSON parser is written here rather than taken**,
+for the reasons in `design/implementation.md`: a conforming parser is entitled
+to hide the duplicate keys, the `-0` and the bare `NaN` that the health verb
+exists to report.
+
+
+The book
+--------
+
+`book/apa.csl` is the APA 7th edition citation style from the Citation Style
+Language project, **licensed CC BY-SA 3.0** and carrying that statement in its
+own `<rights>` element. It is committed rather than fetched so that a build
+cannot silently fall back to a different style.
+
+It keeps its own licence, and it has to: **CC BY-SA forbids adding restrictions,
+and the NonCommercial term on the book's prose is one.** So the file travels
+under CC BY-SA 3.0 wherever this book goes. `book/LICENSE.md` says the same
+thing about the book's two licences.
+
+
+The test suite
+--------------
+
+`test/cases/` is generated and not committed; `test/generate.py` is the
+artifact. Its truncation-ladder, NDJSON and "llm_trap" cases were adapted from
+a JSON parser corpus built by another agent on 2026-08-08 and released CC0.

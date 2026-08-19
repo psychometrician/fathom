@@ -1,0 +1,104 @@
+---
+title: "Architecture"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+> **One Rust core, one CLI, and thin R and Python packages that invoke it as a
+> subprocess. No FFI.**
+
+![Two language bindings, one for R and one for Python, each invoke the same command line as a subprocess. fathom-cli passes the path to fathom-core, the engine, which reads the JSON document itself and returns text: a description of the document, or a table. The document never travels through a binding.](images/architecture.svg){width=100%}
+
+**The document's arrow is the part worth pausing on.** It reaches the engine
+without passing through either binding, and that is a rule rather than a drawing
+convenience — the reason is [below](#why-the-parser-is-hand-written), and it is
+the same reason the parser is hand-written.
+
+This is the sibling project's architecture unchanged, and the obvious guess
+about that project is wrong: it is **not** bound through the usual R or Python
+extension toolchains. It ships a binary and calls it. **So the hard part of
+shipping Rust to CRAN has already been solved once in this household**, which is
+the largest single cost of the decision, and it is paid.
+
+## Why it fits
+
+**One implementation of the part that drifts.** The walk, the fold, the
+keys-as-data classifier and the row pricing are intricate, and on the first day
+of this project they changed three times in two hours. Two hand-written copies
+would diverge, and invisible drift is exactly the danger. One core makes
+divergence impossible rather than merely tested-for.
+
+**No FFI toolchain, per language, forever.** No ABI compatibility, no compiling
+on a user's machine. A binary and a pipe.
+
+**The probe is subprocess-shaped by nature.** You are not passing live objects
+back and forth; you are asking "describe this file" and getting a small answer.
+
+## The one place it strains
+
+The sibling project never ships a large table across the boundary — it emits SQL
+and lets the database do the work, so a pipe carrying a few KB is always enough.
+**fathom's extract half would ship data**, and a large table through stdout is
+where this arrangement gets uncomfortable.
+
+So the boundary is two-shaped:
+
+| call | crosses as |
+|---|---|
+| **probe** | a small JSON summary on stdout: health, the fold with its evidence, the priced candidates |
+| **extract** | a columnar interchange format to a file or pipe, which both languages read natively |
+
+::: {.unsettled}
+The extract half is **undecided** until it has any design at all.
+:::
+
+### The payload size is a test of the thesis
+
+The probe's summary is a few KB whatever the document weighs — that is what
+"output proportional to the structure" *means*, expressed as an API contract.
+
+**If the core ever needed to return something proportional to the data,
+subprocess would be the wrong boundary and the project's central claim would be
+false at the same moment.** Worth watching, because it fails loudly.
+
+## Why the parser is hand-written
+
+The core carries one runtime dependency, for gzip, because a compressed file is
+how JSON at scale actually ships. The JSON parser is **not** a dependency, and
+that is not preference.
+
+A conforming parser is entitled to hide exactly the three things the health verb
+measures. It may reject the bare `NaN` that one language writes and another
+refuses. It may discard duplicate keys, whose silent loss is the finding. And it
+cannot see the sign on `-0`, because that survives only in the token text. **A
+parser that hides those is a parser that hides the findings.**
+
+A fourth reason turned up during the port and none of the three predicted it:
+CPython's handling of a truncated `\u` escape does not match its own documented
+guard. [Parity](parity.qmd) has that story.
+
+## The representation is the point, not the speed
+
+The measured argument for a core is **not** that Rust parses faster.
+
+The prototype needs far more memory than an ordinary library in either language
+on the same file, and a faster parser does not fix it: three Python parsers were
+measured on one file and the fastest bought 11% of the memory, because all three
+build the same object graph and that is where the bytes are.
+
+> **The win a core delivers is not parsing faster. It is never handing the host
+> language a per-record object graph.**
+
+So the representation is a flat arena of nodes addressed by index, with every
+container's children in one contiguous run and every string in one shared
+buffer.
+
+**The first version of it lost anyway**, and by more than it should have. It
+measured *worse* than the Python prototype on the largest corpus file, because
+the 28 MB of text was copied three times before a single value was parsed. The
+arena was never the problem. That is in the findings with the date, and the
+lesson is the ordinary one: the thing you optimised is rarely the thing that
+costs.

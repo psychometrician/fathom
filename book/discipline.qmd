@@ -1,0 +1,100 @@
+---
+title: "The discipline"
+---
+
+Seven rules. The first four were written at the start; the last three were
+written at the end of the first working day, because that day broke all of them.
+
+## 1. Write down what you expect before you measure it
+
+The first corpus file was chosen as a polymorphism specimen and has none. That
+is worth more than a file which confirmed what somebody already believed, and it
+is only worth anything because the expectation was recorded first.
+
+## 2. A finding needs a file and a date, or it is an opinion
+
+Every claim in the findings names the corpus entry it came from and the day it
+was measured. Numbers written from memory go stale within days and read as facts
+forever.
+
+## 3. Ask every file the same questions, in every tool
+
+A tool that skips a question has answered "cannot", which is data. A session
+that skips a question has produced nothing comparable.
+
+## 4. Score the exploring separately from the extracting
+
+If a session records only how the extraction went, it has measured the half that
+was never in question.
+
+## 5. The probe freezes after each file
+
+By the end of the first day the prototype had been revised against seven
+documents and then benchmarked against tools that got one attempt each. **That
+is a model scored on its training set.** The comparison was worthless and it
+looked convincing, which is the dangerous combination.
+
+So: a defect found on file *N* is fixed, then the prototype is frozen and
+committed, and file *N+1* is run **once, unmodified**. Whatever it gets wrong is
+recorded, not repaired, until the next freeze.
+
+The freeze is a hash, checked before the run:
+
+```bash
+git hash-object design/probe.py design/rows.py
+```
+
+**A held-out run is only held out if that hash matched beforehand.** The first
+version of this ritual recorded a short hash and compared it against the
+forty-character output, so its very first run reported a mismatch that did not
+exist — and a check that cries wolf gets ignored, which is the same lesson the
+health verb learned from the `NaN` detector.
+
+## 6. A competing tool gets the same number of attempts the probe got
+
+If the prototype was revised four times against a file, the competing expression
+may be revised four times too. Otherwise a fifth draft is being compared with a
+first.
+
+## 7. A question added after the feature it describes is marked as such
+
+Scoring other tools "cannot" on a question written to match something fathom had
+just decided to do is circular.
+
+## One place owns each fact
+
+Not a rule about evidence, but the rule this project has broken most often — it
+has had a number live in two places and go stale in one **five times.**
+
+| the fact | its owner |
+|---|---|
+| something was measured | the findings, newest first, with a file and a date |
+| a corpus file's grades | that entry's notes |
+| a decision about what fathom *is* | the readme |
+| a decision about how it would be *built* | the design directory |
+| what runs, what is next, what is blocked | the verdict |
+| what is frozen | the working agreement |
+
+**This book owns nothing**, which is why it computes its numbers instead of
+quoting them.
+
+## What would kill the project
+
+Stated plainly, because a project that cannot say what would falsify it is not
+an investigation.
+
+**If there is no capturable pattern, that is the finding and no package gets
+built.** A respelling of a library that already exists is the outcome to avoid,
+and "purrr, but nicer" inherits roughly 180 exports and has no stopping rule.
+
+The floor that guards against it is split in two, because the first version of
+it disqualified fathom's best idea:
+
+> **A word that touches the *data* earns its place by working at more than one
+> depth. A word that touches the *medium* earns its place by having no analogue
+> at depth one.**
+
+A data word that only helps at depth one belongs in the sibling project. One
+that only helps at depth *N* is JSON plumbing. One that reads the same at one,
+two and *N* is what fathom is for. And the health verb qualifies under the
+second clause precisely *because* there is no such thing as a broken data frame.

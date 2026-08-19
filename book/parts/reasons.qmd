@@ -1,0 +1,15 @@
+# The reasons
+
+The chapters up to here describe what was measured. This one describes the rules
+that decide what counts as a measurement, and every one of them was written
+after something went wrong.
+
+They are worth reading even if you never touch this repository, because the
+failures they are monuments to are ordinary. A prototype tuned against seven
+documents and then benchmarked against tools that got one attempt each — a model
+scored on its training set, and the comparison looked convincing. A number
+written in two places, stale in one, five times over. A detector that fired ten
+times on the word "NaN" inside legitimate prose.
+
+None of those are exotic. They are what happens when a project measures itself
+without a rule about how.

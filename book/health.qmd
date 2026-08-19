@@ -1,0 +1,135 @@
+---
+title: "Is this sound?"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+**There is no such thing as a broken data frame, and that asymmetry is what
+makes this fathom's job.** A data frame is validated by construction: if it
+exists, it is well formed. JSON is bytes claiming to be a format. So the
+rectangular world has no verb for *is this even the thing it says it is*, and
+nothing transfers.
+
+This is also the one place fathom breaks its own rule about what earns a word. A
+word that touches the data has to work at more than one depth; a health check
+has no depth-one analogue **by construction**, and the very asymmetry it fails
+is what justifies it.
+
+## Loud and silent, not valid and invalid
+
+The useful split is not the one a parser makes.
+
+**Loud** damage announces itself. A truncated download. A model response cut off
+at `max_tokens`, which is now the most common broken JSON there is. A JavaScript
+object literal with unquoted keys. The comments and trailing commas of JSONC,
+which is every `tsconfig.json`. NDJSON handed to a JSON parser.
+
+**Silent** damage is the half worth owning, because the file parses and
+something is lost anyway:
+
+| | |
+|---|---|
+| duplicate keys | valid per the spec; the last one quietly wins |
+| integers past 2^53 | anything JavaScript-derived rounds them |
+| `NaN` and `Infinity` | Python's `json.dumps` emits them and jsonlite refuses them, so **a file Python wrote is a file R cannot read** |
+| a negative zero | `json.loads("-0")` returns `0` and the sign is gone |
+| an encoded document | a field whose value is itself a JSON document, as a string |
+
+**The policy is report, never repair.** Silently fixing a document destroys the
+evidence that something upstream is broken.
+
+## What it looks like
+
+Two lines, always in the same place, whatever the document:
+
+```{r}
+#| echo: false
+say(head(probe("corpus/16-movie-ratings/source.json"), 5))
+```
+
+The same verb on a file that is **not one JSON document at all.** This one is
+made up rather than drawn from the corpus, because every committed corpus file
+is ordinary JSON and the point here is the format that is not:
+
+```{r}
+#| echo: false
+nd <- file.path(tempdir(), "events.ndjson")
+writeLines(c('{"id":1,"kind":"push"}', '{"id":2,"kind":"fork"}',
+             '{bad line}',            '{"id":4,"kind":"push"}'), nd)
+say(head(probe(nd), 6))
+```
+
+**Three records read, one line named, and the format still correctly called.**
+
+## NDJSON is in scope, and the health check is what forces it
+
+An NDJSON file is *not valid JSON*. A naive check calls it broken when it is
+fine, so telling **broken** from **a different format** is unavoidable — and
+NDJSON is how JSON at scale actually arrives: logs, warehouse exports, model
+traces.
+
+It stays NDJSON even when a line inside it is broken. An early version detected
+the format, hit a bad line, and forgot — reporting "unrecognised" for a file
+whose format it had already identified, which is the one case the format most
+needs reporting for.
+
+## The probe never lies about its own coverage
+
+You cannot know whether a 10 GB file is chopped off without reading to the end,
+and you cannot probe it by parsing it. So the report states how many records it
+read and what it therefore cannot claim:
+
+> `SAMPLE: the first 20,000 of 1,247,913 records. Everything below describes
+> those and cannot speak for the rest.`
+
+The same honesty runs deeper than it looks. When nothing could be parsed, the
+report carries **no damage counters at all** rather than zeroes — because "0
+duplicate keys" is a claim about a document it never got to look at. That
+distinction survived the port to Rust as a deliberate piece of work.
+
+## The one detector that cried wolf
+
+The `NaN` check used to run a regular expression over the raw text. On a Jupyter
+notebook it fired ten times, every one of them the word "NaN" inside legitimate
+R console output that the notebook had stored as a string.
+
+**A health check that cries wolf is worse than none**, because the next real one
+gets ignored. The detector now counts parsed values, not text.
+
+The same lesson arrived a second time from the other direction. A check for
+"values that are themselves encoded JSON" reported 17 on the same notebook, and
+every one was a false positive: Advent of Code day 18 is *Snailfish*, whose
+puzzle input **is** nested integer lists, and `[376.0, 490.543]` is a Python
+`repr`. All 17 parse as JSON and start with a bracket. The test was right by its
+own definition and wrong about the world, and the fix was to say what a
+*document* is: an object, or an array containing one. A bare array of scalars is
+data that happens to be bracketed.
+
+## How it is scored
+
+Health is the one part of fathom with an exhaustive test suite rather than a
+corpus, and the difference is a rule. The corpus takes real files only, because
+toy JSON is hard in ways nobody suffers from. A test suite is the opposite:
+synthetic, exhaustive, generated.
+
+**What is scored is what fathom *said*, not whether it parsed.** A parser's
+suite asks *did you accept it?* A reporter's asks *did you say the right thing
+about it?* So a flag that fires when it should not fails exactly as loudly as
+one that does not fire when it should.
+
+The suite includes a **truncation ladder** — every single byte offset of three
+documents, each one cut short — and a **control for every damage flag**, a case
+that is genuinely clean and where the flag must stay silent. The controls are
+there because of the `NaN` incident above.
+
+```{r}
+#| echo: false
+say(tail(at_root(system2("uv", c("run", "test/check.py"),
+                         stdout = TRUE, stderr = FALSE)), 9))
+```
+
+Those same cases score the Rust core, through the same harness. [Parity](parity.qmd)
+is about why that had to be the *same* scorer rather than a second one.

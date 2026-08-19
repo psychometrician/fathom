@@ -1,0 +1,72 @@
+---
+title: "Why JSON defeats technique"
+---
+
+*This chapter is the author's account, reconstructed from conversation and
+written in the first person. It is the load-bearing part of the argument, and it
+is opinion rather than measurement — which is why it is marked as such here
+rather than folded in with the findings.*
+
+Twenty years of working with data, and rectangular data is a solved problem. I
+reach for the same handful of verbs, and whatever shape the table arrives in, I
+know how to start.
+
+JSON is not like that. I have parsed a lot of it, and each time the next file
+defeats the technique that worked on the last one. Not the ideas — the *code*.
+Nothing carries over. That is genuinely frustrating in a way that badly shaped
+tables never are.
+
+**The hardest part is not the extraction. It is the exploring.** Before you can
+write anything you have to find out what the document even has, how many levels
+it goes down, and where the thing you want is living. That phase has no tooling
+worth the name, and it is where the time goes.
+
+**So what I actually do is avoid it.** I get the JSON into a data frame as fast
+as I possibly can, by whatever means, and then do the real work in tools I
+trust. Avoidance is a reasonable strategy and it is also the symptom: I am
+routing around a format rather than using it, and I do not think that is only
+me.
+
+## Why this matters more than it used to
+
+JSON is no longer a thing you meet at an API boundary. It is everywhere, and the
+volume is growing rather than shrinking, so this is not a legacy problem that
+better APIs will retire.
+
+**Language model output is the newest case and probably the worst.** Structured
+output, tool calls and agent traces all arrive as JSON, and models produce
+genuinely inconsistent shapes: a field that is a string in one response and an
+object in the next, arrays that are sometimes absent and sometimes empty,
+optional keys that appear at whatever rate the prompt happened to induce.
+Anybody analysing a pile of model responses is doing exactly this work, and most
+of them are doing it by hand.
+
+**JavaScript data is the oldest case and has not gone away.** Anything scraped,
+anything from a browser, anything from a config file or an event stream.
+
+## Why both languages
+
+**purrr is the best answer that exists and it is R only.** It is genuinely
+versatile for deep JSON. It also has a syntax I have never enjoyed, so even in R
+there is something to improve on.
+
+**Python has no single answer at all.** glom, jmespath, pydash,
+`pandas.json_normalize`, polars, DuckDB and ijson each cover a fragment, and
+none of them is the one you learn. That is the same "five spellings of one idea"
+problem that makes any of this hard to retain.
+
+So a person who works in both languages — which is most people who touch a data
+warehouse — learns two incomplete sets of habits and holds on to neither.
+
+## The bar
+
+> Read it on day one, write it on day two, and **still have it after a year
+> away.**
+
+Not remember that it exists. Be able to point it at a JSON file you have never
+seen, twelve months after the last time, and get somewhere without opening the
+reference.
+
+That bar is what makes a small opinionated vocabulary worth more than a complete
+one, and it is why this starts as research. A syntax that reads well and does
+not survive the year is a failure that takes a year to detect.

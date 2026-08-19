@@ -1,0 +1,3 @@
+# 7,967,776 bytes, over the corpus's ~5 MB commit threshold. fetch.sh gets it,
+# and NOTES.md records what the file was on the day. Same rule as 04-gharchive.
+source.json

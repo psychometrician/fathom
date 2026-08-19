@@ -1,0 +1,82 @@
+---
+title: "What makes a document hard"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+Naming what makes a document hard is most of the way to the syntax, so the axes
+are a primary output of this project rather than a way of organising it. A file
+is graded on each independently, because a file can be brutal on one and trivial
+on the rest.
+
+One rule governs the list:
+
+> **An axis that never separates two files is not an axis.**
+
+| Axis | What it means |
+|---|---|
+| **depth** | how many levels down the values live |
+| **recursion** | self-similar structure of unknown depth, such as a comment thread |
+| **raggedness, by absence** | a key present in some records and absent in others |
+| **raggedness, by null** | the key is always there and the value sometimes is not |
+| **polymorphism** | one field is a scalar here and an object there |
+| **keys-as-data** | object keys are values, `{"1.0.0": {…}, "1.0.1": {…}}` |
+| **heterogeneous arrays** | one array holding more than one shape |
+| **path variance** | one field *name* living under more than one container |
+| **unit ambiguity** | more than one defensible answer to "what is one row" |
+| **scale** | does it fit in memory |
+
+## The three corrections, which are the interesting part
+
+**One axis was demoted.** *Path explosion* — the sheer number of distinct paths
+— is high exactly when keys-as-data or recursion is present and low when neither
+is. It carries no information its causes do not, so it is still reported,
+because it is what you notice first, and no longer graded as independent.
+
+**One axis was two axes.** *Raggedness* was doing two jobs. One corpus file is
+ragged by absence and not at all by null; another is the exact reverse, with one
+key-set across every node and four fields that are null on all but one of them.
+Scored on the old single axis the second reads "raggedness: none", which is true
+and thoroughly misleading.
+
+**One axis is narrower than its own description.** *Path variance* was described
+as "the same logical value living at different paths", which covers two things,
+and only one of them was ever measured:
+
+| | what it is | measured? |
+|---|---|---|
+| **by relocation** | one field NAME under several containers | **yes, this is the axis** |
+| **by renaming** | one logical FIELD under several names — `Rating` and `rating` | **no axis measures it** |
+
+**Renaming is recorded as a real property with no instrument**, rather than
+folded into an axis that would then mean two things. The obvious detector —
+fields under one container that never co-occur — was measured across the corpus
+and catches *fields belonging to different kinds* instead: it pairs `Genre` with
+`popcornscore`, which are mutually exclusive and are not the same field. What
+makes `Rating` and `rating` one field is that the names resemble each other, and
+this project refuses lexical rules.
+
+**And one axis has never been tested.** No document in the corpus has ever
+strained memory, so `scale` has never had the chance to separate anything. That
+is a gap in the corpus, not evidence against the axis.
+
+## Unit ambiguity is the one the tool is really for
+
+The cost of rectangling **changes in kind with the row you pick.** Shallow gives
+you holes; deep gives you duplication. The document tells you neither.
+
+On the first corpus file, one row per version is 288 rows that are 60% empty,
+and one row per dependency edge is 4,645 rows with the package name repeated
+4,645 times. Both are correct answers to "what is one row".
+
+```{r}
+#| echo: false
+r <- probe("corpus/01-npm-registry/source.json")
+say(r[grep("ONE ROW COULD BE", r):length(r)])
+```
+
+Pricing those is the part nothing else offers, and it is [the third
+question](rows.qmd).

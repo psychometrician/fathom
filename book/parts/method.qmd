@@ -1,0 +1,16 @@
+# The method
+
+An investigation that measures whatever it happens to notice produces notes, not
+evidence. This part is the apparatus that turns one into the other.
+
+Two pieces. **A fixed list of questions**, asked of every document in every
+tool, because a tool that skips a question has answered "cannot" — which is
+data — while a session that skips one has produced nothing comparable. And **a
+corpus of real files**, graded the same way, chosen so that no result can be an
+artifact of what happened to be on one laptop.
+
+The rule that binds them is the one this project would keep if it kept nothing
+else: **write down what you expect before you measure it.** The first file in
+the corpus was chosen as a polymorphism specimen and turned out to have none.
+That is worth more than a file which confirmed what somebody already believed,
+and it is only worth anything because the expectation was recorded first.

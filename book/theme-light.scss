@@ -1,0 +1,101 @@
+/*-- scss:defaults --*/
+
+// The light theme. Bootstrap variables only, so Quarto compiles them into the
+// framework rather than fighting it afterwards with `!important`.
+//
+// **The accent is fathom's and never gog's, and that is a measured decision
+// rather than a taste one.** `README.md` records the arithmetic: in CIELAB,
+// gog's sand is hue 82 and god's slate is hue 254, leaving a 188-degree arc
+// between them the other way round. Splitting it puts fathom at **348**,
+// equidistant at 94 degrees from each, with lightness and chroma matched to the
+// siblings at L* 85 and C* 20. The three read as one family of peers.
+//
+// A green was the alternative and is weaker for a reason worth keeping: hue 150
+// to 168 sits INSIDE the sand-to-slate arc, so the three hexes would read as a
+// progression along a scale rather than as three siblings. Copying gog's peach
+// here would be the same mistake with the volume up — it would say fathom is
+// gog's chapter rather than gog's sibling.
+
+$rose:        #f6c8dd;   // fathom's, straight off the sticker
+$rose-deep:   #e6a3c4;
+$rose-wash:   #fdf3f8;
+$ink-bar:     #221a1e;   // the chrome: warm near-black, carrying a little rose
+$ink:         #171216;
+$ink-soft:    #574c52;
+
+$body-bg:     #ffffff;
+$body-color:  $ink;
+
+// fathom's link colour, derived from the rose the way gog's amber is derived
+// from its peach: dark enough to read as text on white, and still recognisably
+// the sticker's hue. Measured at hue 348, dropped in lightness until it clears
+// WCAG AA against white.
+$link-color:        #a62a5e;
+$link-hover-color:  #7d1a43;
+
+// Greys carrying a trace of the same rose rather than Bootstrap's blue-greys.
+// The default `#f8f9fa` beside a rose accent reads as two unrelated designs.
+$gray-100: #faf6f8;
+$gray-200: #f1e9ee;
+// Near-white, and it is the theme toggle that needs it rather than any grey
+// surface. Quarto paints `.quarto-navigation-tool` from this value and bakes it
+// into the toggle's own artwork as the `fill` of a `background-image` data URI
+// that no later CSS rule can reach. The dark theme writes down the same trap
+// arriving from the other side.
+$gray-300: #f3ebef;
+
+// The hairlines name their own colour instead of following the grey above.
+// Without this they go near-white with it and take every border and table rule
+// along.
+$hairline: #e6dae0;
+$gray-600: $ink-soft;
+$gray-800: #2b2327;
+
+// Inert in a book, which has a sidebar rather than a navbar, and carried so the
+// structure matches its sibling.
+$navbar-bg:                 $ink-bar;
+$navbar-light-color:        rgba(243, 235, 239, 0.78);
+$navbar-light-hover-color:  #ffffff;
+$navbar-light-active-color: #ffffff;
+$navbar-light-brand-color:  #f3ebef;
+
+// Pinned, and pinned identically in both themes. Cosmo ships
+// `$navbar-padding-y: 0.5rem` and darkly ships `1rem`, so the bar changes
+// height when the toggle is clicked and the whole page steps down with it. A
+// theme switch should change colours and nothing else.
+$navbar-padding-y: 0.6rem;
+$navbar-brand-padding-y: 0.25rem;
+$navbar-brand-font-size: 1.19rem;
+$navbar-nav-link-padding-x: 0.62rem;
+
+$font-family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter,
+                         "Helvetica Neue", Arial, sans-serif;
+$font-family-monospace:  ui-monospace, "SF Mono", Menlo, Consolas,
+                         "Liberation Mono", monospace;
+
+$font-size-base:   1.0625rem;
+$line-height-base: 1.7;
+
+// **Code does not grow with the prose, and this book is a hard case for it.**
+// The probe's report is fixed-width output whose alignment carries meaning —
+// the field lists wrap at a measured 92 characters and `coverage.py` reads the
+// indentation as structure. A `pre` sized at Bootstrap's `0.875em` of a raised
+// base pushes the longest report lines past the column.
+$code-font-size: 0.824em;
+
+$headings-font-weight: 700;
+$headings-color:       $ink;
+
+$border-radius:    10px;
+$border-radius-lg: 16px;
+$border-color:     $hairline;
+
+// Inline code is deliberately not brand-coloured. This book names `probe.py`,
+// `rows()`, `first_present` and a field name in almost every paragraph, and a
+// rose-tinted panel on each would make a page read as though it were shouting.
+// Code in running prose is a noun, not an emphasis.
+$code-color:            #2b2327;
+$code-bg:               #f3eff1;
+$pre-bg:                $gray-100;
+$table-border-color:    $hairline;
+$blockquote-font-size:  1rem;

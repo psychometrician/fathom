@@ -1,0 +1,117 @@
+---
+title: "Parity"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+A rewrite is the easiest place in software to lose something without noticing.
+The new thing passes its tests, the old thing is deleted, and the behaviour that
+nobody wrote a test for is gone.
+
+This port is arranged so that cannot happen, and the arrangement is one
+sentence:
+
+> **`design/probe.py` is not replaced by the port. It becomes the oracle, and
+> the port is finished when the difference between them is empty.**
+
+## The port reproduces the defects too
+
+That follows from the sentence above and is worth stating on its own, because
+the temptation runs the other way.
+
+The prototype has open defects. It cannot see a structure whose parts are
+related by position rather than nesting when there is only one copy of the
+holder. Its natural extraction yields list-columns that the sibling project's
+spec refuses. Both are known, both are written down, and **both were ported
+faithfully.**
+
+A port that improves what it copies cannot be verified against it, because the
+improvement and the regression arrive as the same diff. The repairs happen
+afterwards, deliberately, one at a time, against an oracle that agrees.
+
+## The stages say where, the page says whether
+
+The criterion is a byte diff of the finished report, and nothing weaker will do.
+A report that is right in substance and different in layout is still a different
+report — and this project's own coverage instrument reads the page back as a set
+of claims, telling a shape header from a split from a wrapped continuation **by
+indentation alone**. A column is not cosmetic here.
+
+But a byte diff alone can only say *this document differs*, and leave which of
+the walk, the fold, the classifier, the pricing or the renderer produced it to
+be guessed. So every stage is dumped and diffed as structured data as well.
+
+**Both were necessary, and the last defect in the whole port proves it.** Two
+documents differed at the very end, on twelve lines each. Every stage
+comparison had already passed: the aligned-arrays detector had found the right
+paths, the right lengths, the right parents and the right header candidates on
+both files. **Every finding was correct and the page was still wrong**, because
+one format string padded a path to 46 characters and then wrote the next column
+without the space between them.
+
+No structured comparison of the fold would ever have said so.
+
+```{r}
+#| echo: false
+say(at_root(system2("uv", c("run", "test/parity.py"),
+                    stdout = TRUE, stderr = FALSE)))
+```
+
+The health verb is compared on the synthetic cases **and** every corpus file,
+field by field. The structure stages are compared on every document that parses.
+
+## One scorer, two implementations
+
+The health suite scores the Rust core through exactly the harness that scores
+the Python. That was a deliberate choice over the obvious alternative of writing
+a Rust test suite.
+
+**A separate suite is free to be wrong in the same direction as the code it
+scores**, which is how two implementations drift while both stay green. One
+manifest and one set of rules read both, so a disagreement is a failure of
+whichever is being scored and cannot hide in the harness.
+
+## The check the pass/fail suite could not make
+
+The 198 health cases record which damage flags should **fire**. They do not
+record what those flags should **count**.
+
+That gap matters, because the prediction written down before the port began was
+that the *counts* would diverge — specifically that Python's UTF-8 replacement
+and Rust's would disagree about how many replacement characters a truncated
+document had earned. Both implementations could pass all 198 cases while
+disagreeing about exactly the number the prediction was about.
+
+So the field-by-field diff exists beside the pass/fail suite. **The prediction
+turned out to be wrong** — 145 truncation cases agree byte for byte — but it was
+wrong *on the record*, which is the only way a prediction is worth making.
+
+## What the diff actually caught
+
+One thing, in the whole port, and it is a fact about CPython rather than about
+Rust.
+
+Its scanner wants **five** characters after a `\u` escape, not four. So a
+document truncated exactly after the four hex digits reports `Invalid \uXXXX
+escape` where every defensible reading says `Unterminated string`. Five cases in
+the truncation ladder land on precisely that byte.
+
+**Its own source documents the guard as `> len` and it behaves as `>=`.** No
+amount of reading the C would have found it; only running both and diffing did.
+
+The port copies the behaviour, not the source, because the oracle is CPython.
+
+## Two things reproduced that are not in the probe's source
+
+**Python's `set` iteration order decides a tie.** The recursion fold picks a
+canonical path out of a set, and set order is unspecified and hash-randomised.
+Rather than assume it never matters, every corpus file was rendered under
+randomised hash seeds and checked: all identical. The port uses a deterministic
+order, and the sweep is what makes that safe rather than lucky.
+
+**`True == 1` in Python**, so a discriminator grouping on raw values treats them
+as one kind. No corpus file exercises it. It is reproduced anyway, because a
+divergence there would be invisible.

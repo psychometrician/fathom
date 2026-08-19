@@ -1,0 +1,42 @@
+# Not a package. This exists so `uv run` gives every attempt file the same
+# interpreter and the same tool versions, and `uv.lock` records which ones.
+#
+# Run an attempt:  cd corpus/01-npm-registry/python && uv run try-pandas.py
+# Probe something: uv run python -c '...'
+#
+# The reason this is here rather than a plain venv: `python3` on this machine
+# resolves to miniconda, which has none of these, while the libraries were
+# installed into Homebrew's 3.14. `uv run` ignores PATH, so that cannot bite.
+
+[project]
+name = "fathom-corpus"
+version = "0"
+description = "Environment for the fathom corpus attempts. Not a package."
+requires-python = ">=3.14"
+
+dependencies = [
+    # Python tools in the comparison, per README.md
+    "pandas",     # json_normalize
+    "polars",
+    "duckdb",     # read_json_auto
+    "glom",
+    "jmespath",
+    "pydash",
+    "ijson",      # for a file that does not fit in memory
+    "jq",         # the same query language R reaches through jqr, so the grid
+                  # does not credit jq to R alone
+
+    # NOT IN THE COMPARISON, and the distinction is the point. These are
+    # PARSERS, and all nineteen questions are about DESCRIBING a document
+    # nobody has read, which no parser answers. They are here only to measure
+    # the scale axis — see FINDINGS.md, 2026-08-09: a 2.5x faster parser bought
+    # 11% of the memory and ujson used MORE than the standard library, because
+    # all of them build the same Python object graph.
+    # `cysimdjson` is absent on purpose: it does not build on Python 3.14 here,
+    # and a tool a user cannot install is a tool a user cannot reach.
+    "orjson>=3.11.9",
+    "ujson>=5.13.0",
+]
+
+[tool.uv]
+package = false

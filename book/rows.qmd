@@ -1,0 +1,89 @@
+---
+title: "What could one row be?"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+**This half is ported and verified.** The Rust core prices candidates
+identically to the prototype on every corpus file — including reproducing
+`pandas.json_normalize`, which was named as the port's largest risk before any
+Rust was written. [Parity](parity.qmd) has that story.
+
+**Rectangling is not the goal**, and getting that wrong was the first
+correction this project made to itself.
+
+> **A table is the shape of your answer, never the shape of the document.**
+
+An extract may be any shape — a value, a vector, a list. The rectangular ones
+are what flow onward into the next tool in the chain; non-rectangular extracts
+are terminal, for looking at or for feeding back into another call.
+
+But when you *do* want a table, the document does not tell you which one, and
+**pricing the candidates is the part nothing else offers.**
+
+## Every defensible answer, and what each costs
+
+```{r}
+#| echo: false
+r <- probe("corpus/01-npm-registry/source.json")
+say(r[grep("ONE ROW COULD BE", r):length(r)])
+```
+
+Read the two extremes. One row per version is a wide table that is mostly holes.
+One row per dependency edge is a long table with the same name repeated
+thousands of times. **The cost changes in kind with the row you pick** — shallow
+gives you holes, deep gives you duplication — and neither is wrong.
+
+## Computed on the fold, never on the data
+
+The first version of this recursed into raw values and emitted one candidate per
+version, producing **1,239 lines on a 786 KB file** — reproducing the exact
+failure the whole project exists to prevent.
+
+> **The fold is not a display step.** Anything computed from raw values rather
+> than from the folded structure will be proportional to the data no matter what
+> it prints.
+
+## The candidate that is really several tables
+
+A document of ten kinds has ten answers to "what is one row", and the operation
+that finds them has already run by the time the candidates are priced. An
+earlier version printed the split near the top of the report and then, twenty
+lines later, offered a single 319-column table that was 93% empty — same
+program, same fold, two numbers, no join.
+
+```{r}
+#| echo: false
+r <- probe("corpus/02-hn-thread/source.json")
+say(r[grep("ONE ROW COULD BE", r):length(r)])
+```
+
+The `└─` line is the report contradicting its own previous line, on purpose.
+
+## What porting this costs
+
+The prototype prices a candidate by building the table with a data-frame library
+and reading three things off it: its shape, its fraction of missing cells, and
+the most-repeated value in each column.
+
+**That was the single largest parity risk in the port**, named as such before
+any Rust was written. The core has to reproduce that library's flattening rule
+and its missing-value semantics exactly, or every percentage in the block above
+moves — and a percentage that moves by one point is a diff that looks like a bug
+in the fold.
+
+It reproduces them, and two of the behaviours had to be **measured** because the
+obvious guess was wrong. `astype(str)` leaves a missing value missing rather
+than rendering it as the string `"nan"`, so the distinct count drops it. And the
+inferred column type decides the digits: a column of integers with no hole
+prints `1`, and the same column with one hole prints `1.0`. **Same data,
+different count, and nothing in the document changed.**
+
+::: {.unsettled}
+**The cost is a standing liability.** That part of the core is a model of one
+library's behaviour at one version. Anything pandas changes there is a parity
+failure rather than a bug in fathom, and the harness is what would catch it.
+:::

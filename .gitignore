@@ -1,0 +1,170 @@
+# This file starts by ignoring everything, then names what is public. A denylist
+# fails open — anything added later ships unless somebody remembers to exclude
+# it — and git history cannot be unpublished. An allowlist fails closed instead:
+# a new top-level path stays invisible until it is named here.
+#
+# **It was a denylist until 2026-08-19**, which was safe only because the
+# repository had no remote. It has one now, so the failure mode changed from
+# "an untracked file sits in `git status`" to "an untracked file is on the
+# internet", and those are not the same risk.
+#
+# Order matters: ignore all, allow the public paths, then re-ignore build output
+# and oversized specimens that live inside them.
+#
+# **A new file at the repository root is invisible until it is named below**, and
+# it fails silently: `git status` will not mention it, `git add` will refuse it
+# with no message worth reading, and nothing else goes wrong. That is the
+# allowlist working as designed, and it is also the only way it bites.
+# `git check-ignore -v <path>` says which line is responsible.
+#
+# **`notes/` is deliberately absent and must stay absent.** It is where working
+# notes go, and the whole point of this design is that it takes an edit to this
+# file to publish one.
+
+/*
+
+# The core, and the command line over it. `fathom-core` owns the walk, the fold,
+# the classifier and the pricing; `fathom-cli` is the single entry point both
+# packages invoke as a subprocess.
+!/fathom-core/
+!/fathom-cli/
+
+# The two bindings. Neither has a dependency, and each is a thin wrapper that
+# finds the binary and hands back its bytes.
+!/r/
+!/python/
+
+# The corpus is the instrument. Real documents only, graded the same way, with
+# provenance and a date — a claim nobody can re-run is not evidence.
+!/corpus/
+
+# The design record: the ORACLE `probe.py` is diffed against, the instruments
+# that read it, and the decisions with the day they were made.
+!/design/
+
+# The generated cases for the health verb, and the five scorers. NOT the corpus.
+!/test/
+
+# The manual. It stays with the core because every report in it is computed by
+# running the frozen probe against the real corpus at render time, so one change
+# to either invalidates every page at once.
+!/book/
+
+# The hex sticker, drawn as geometry.
+!/images/
+
+!/.github/
+
+# Root files. `QUESTIONS.md` is the method's specification and the book reprints
+# its list; the working record — the agreement, the findings log and the session
+# handoffs — lives in `notes/`, which is a repository of its own and which the
+# `/*` above hides from this one. `README.md` says so, so the citations to those
+# documents scattered through this tree are deliberate rather than broken.
+#
+# `/CLAUDE.md` is deliberately NOT named here. It is a symlink to
+# `notes/CLAUDE.md`, so that Claude Code — which loads a working agreement only
+# from the project root — still finds it while the file itself stays private.
+!/README.md
+!/QUESTIONS.md
+!/LICENSE
+!/NOTICE
+!/Cargo.toml
+!/Cargo.lock
+!/pyproject.toml
+!/uv.lock
+# **The interpreter, pinned — and `uv.lock` does NOT do this.** The lock pins
+# the packages; `requires-python = ">=3.14"` is a floor, so uv takes whatever
+# Python the machine offers above it. The health verb reports the PARSER'S OWN
+# error text, and CPython rewords those between versions, so an unpinned
+# interpreter makes `parity.py` fail on a machine that is not this laptop —
+# which is exactly what CI found on its first run, on two truncated `\u` cases.
+!/.python-version
+!/.gitattributes
+!/.gitignore
+
+# ---------------------------------------------------------------------------
+# Re-ignored, inside the paths allowed above
+# ---------------------------------------------------------------------------
+
+# Attempts leave junk behind; the corpus and the findings are the artifact.
+.Rhistory
+.RData
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# A source file over about 5 MB gets a fetch.sh instead of being committed.
+# Anything matching this is a mistake rather than a policy.
+corpus/**/*.large.json
+
+# 14-nyc-311's source is 28 MB, so `corpus/14-nyc-311/fetch.sh` is what is
+# committed and the download sits here untracked. Named individually rather than
+# by a `corpus/**/source.json` rule, because FIFTEEN entries do commit theirs and
+# a blanket ignore would read as though the corpus keeps none of them. It was
+# showing in `git status` indefinitely, which is an invitation to the `git add`
+# the size rule exists to prevent.
+corpus/14-nyc-311/source.json
+# 20-homebrew-formulae's source is 29.6 MB, same rule, same reason.
+corpus/20-homebrew-formulae/source.json
+# 21-crossref-works is 7.5 MB. The prediction said 2-5 MB and it was wrong,
+# which is the only reason this line exists rather than a committed source.
+corpus/21-crossref-works/source.json
+# 25-usgs-quakes is 7.4 MB. Its prediction said 8-25 MB and was wrong the other
+# way, which changed nothing: either side of 5 MB is what decides this list.
+corpus/25-usgs-quakes/source.json
+# 26-gharchive-scale ships at 118 MB gzipped and 870 MB raw. Same rule as 04,
+# 14, 20, 21 and 25 above: fetch.sh is the artifact, the download is not.
+corpus/26-gharchive-scale/source.json.gz
+corpus/26-gharchive-scale/source.jsonl
+
+# The health-verb test cases are generated and deterministic. The generator is
+# the artifact; the tiny files are not. `uv run test/generate.py` rebuilds them.
+# The count deliberately is NOT written here — it lived here as 189 while the
+# suite reported 193, which is the sixth time a number in two places went stale
+# in one. VERDICT.md owns it.
+test/cases/
+
+# Rust build output. `Cargo.lock` IS committed — this workspace builds a binary
+# rather than a library, and the lock is the R and Python packages' only
+# equivalent of `uv.lock`. `CLAUDE.md` records that Python is exactly
+# reproducible here and R is not; the core is now the third case and it is the
+# reproducible kind.
+target/
+
+# The engine, copied into the R package at install time by `configure`. It is
+# built output that happens to live inside a source tree.
+r/inst/bin/
+
+# The rendered book, and the caches that make a re-render fast. The `.qmd`
+# sources and the theme are the artifact; `_book/` is derived from them plus the
+# corpus plus the binary, and `quarto render` rebuilds it.
+#
+# `_freeze/` is where knitr keeps the OUTPUT of each chapter's code cells, and
+# it is ignored on purpose even though committing it would make a render
+# reproducible without the tools. This book computes its numbers by running the
+# real probe against the real corpus precisely so a stale number is impossible;
+# a committed freeze cache is exactly the stale copy that rule exists to
+# prevent. Delete it to force a re-measure.
+book/_book/
+book/.quarto/
+book/_freeze/
+book/site_libs/
+book/.venv/
+book/**/*_files/
+
+# Editor and tooling reports. `.VSCodeCounter` writes results.* and diff.* line
+# counts, which are derived from the code, regenerate on demand, and are stale
+# the moment anything changes. Committing them would put a per-file line count
+# in a second place with no owner in CLAUDE.md's table — the same failure the
+# block above is a monument to.
+.VSCodeCounter/
+
+# The two bindings' build artifacts. The SOURCE of each package is committed; a
+# tarball, a wheel and an R CMD check directory are all rebuilt in seconds from
+# it, and a committed build is a second copy of the code with nobody responsible
+# for refreshing it.
+fathom_*.tar.gz
+*.Rcheck/
+python/dist/
+python/*.egg-info/

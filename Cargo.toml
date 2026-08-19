@@ -1,0 +1,33 @@
+[workspace]
+members = ["fathom-core", "fathom-cli"]
+resolver = "2"
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+license = "Apache-2.0"
+authors = ["psychometrician"]
+rust-version = "1.75"
+
+# `fathom-core` carries ONE runtime dependency and the reason is worth stating,
+# because god-core carries none and the difference is a decision rather than a
+# slide.
+#
+# god turns text into a plan and a plan into SQL, and neither job needs a
+# library. fathom reads bytes off a disk, and `04-gharchive` was unreadable for
+# want of three lines of gzip — **gzip is not a curiosity, it is how JSON at
+# scale ships.** So one decompressor is load-bearing in a way nothing in god is.
+#
+# `rust_backend` is `miniz_oxide`, pure Rust with no C and no build script, so
+# the vendoring property god's Cargo.toml prizes is intact: this still compiles
+# in seconds and still vendors without argument for CRAN.
+#
+# **The JSON parser is deliberately NOT a dependency**, which is the larger
+# decision and is recorded in `design/implementation.md`. `serde_json` cannot
+# express what the health verb measures: it rejects the bare `NaN` and
+# `Infinity` that Python's `json` writes and jsonlite refuses, it discards the
+# duplicate keys whose silent loss is the point, and it cannot see the sign on
+# `-0` because that survives only in the token text. A parser that hides those
+# is a parser that hides the findings.
+[workspace.dependencies]
+flate2 = { version = "1", default-features = false, features = ["rust_backend"] }

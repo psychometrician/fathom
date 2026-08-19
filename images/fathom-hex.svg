@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-95 -112 190 224" width="1696" height="2000"
+     role="img" aria-label="The fathom hex sticker. A rose pink hexagon with a black border, holding a face built from JSON's own marks: an opening and a closing brace as the two eyes, a colon as the nose, and the package name as the mouth.">
+
+  <!-- The fathom hex sticker.
+       Standard hex geometry, identical to god's: 2 inches tall by 1.732 wide,
+       pointy top, flat sides. The two are meant to sit next to each other, so
+       the polygon, the viewBox, the 11-unit border and the black marks are the
+       same. Only the fill and the face differ.
+
+       **The marks are JSON's, not fathom's, and that is deliberate.** gog draws
+       from graphics and god from the pipeline, both following one rule: every
+       mark on a sticker should be one a reader actually types. fathom has no
+       syntax yet, so the honest source is the material it works on. Everybody
+       who has opened a JSON file has typed a brace and a colon.
+
+       Revisit this if fathom ever grows marks of its own.
+
+       **The fill is measured rather than chosen.** In CIELAB, gog's sand is
+       hue 82 and god's slate is hue 254, which leaves an arc of 188 degrees
+       between them going the other way round. Splitting it puts the third
+       sticker at **348**, equidistant at 94 degrees from each. Lightness and
+       chroma are matched to the siblings at L* 85 and C* 20, so the three read
+       as one set.
+
+       A green was the other candidate and is the weaker answer for a reason
+       worth keeping: hue 150 to 168 sits *inside* the sand-to-slate arc, so the
+       three hexes read as a progression along a scale. Rose sits outside it, and
+       three peers is what a family of sibling packages should look like.
+
+       **The colon is the nose on god's own argument.** god's nose is `( )`
+       because every verb in both languages is a call. fathom's is `:` because
+       every pair in every JSON document is `key: value`. It appears in every
+       document there is, unlike `"` and `,` it is distinctive, and it is
+       already the shape of a nose.
+
+       **The face does not have a gaze, and one was tried.** god's book says both
+       its eyes point right, so that face looks at the next step; this one was
+       going to look down, because fathom sounds depth. The braces were to carry
+       it with their waists below centre. Rendered, that made them stop reading
+       as braces at all, so it was removed. A mark that is wrong is worse than a
+       mark that says nothing extra, and the story a sticker tells is not worth
+       breaking the letter it is made of. -->
+
+  <defs>
+    <!-- An opening brace, drawn as geometry rather than set as type, because a
+         brace differs in height, waist and arm sweep in every typeface and two
+         of them side by side would read as unequal marks.
+
+         **The two straight spine runs are what make it a brace.** Drawn as four
+         curves end to end, with no straight segment anywhere, it reads as a
+         squiggle instead: that was the first version and it did not look like a
+         brace to anybody. The `L` commands below are the fix, and they are the
+         part not to smooth away.
+
+         Stroke is 6 against god's 8.5 straight bars, because a curve of equal
+         width carries more ink and would outweigh them.
+
+         **The waist is centered, and an earlier version dropped it to +4 to make
+         the face look downward.** That idea is gone, and the reason is worth
+         keeping: a brace has a centered point, so moving it does not read as a
+         downcast eye, it reads as a broken brace. Rendered at +2 the effect was
+         invisible and at +4 it was the main thing making the mark look wrong.
+         The glyph being correct beats the gaze being expressive. -->
+    <g id="eye-brace">
+      <path d="M 9,-23
+               C 3.6,-23  0,-18.1  0,-16
+               L 0,-9
+               C 0,-4   -3.6,-1  -9,0
+               C -3.6,1  0,4     0,9
+               L 0,16
+               C 0,18.1  3.6,23   9,23"
+            fill="none" stroke="#000000" stroke-width="6"
+            stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+
+    <!-- The colon. Two dots rather than one glyph, so the gap is a number
+         somebody chose. Closed up they read as a single blot; too far apart and
+         the face loses its centre. -->
+    <g id="nose-colon">
+      <circle cx="0" cy="-7" r="4.6"/>
+      <circle cx="0" cy="7" r="4.6"/>
+    </g>
+  </defs>
+
+  <polygon points="0,-100 86.6,-50 86.6,50 0,100 -86.6,50 -86.6,-50"
+           fill="#F6C8DD" stroke="#000000" stroke-width="11" stroke-linejoin="miter"/>
+
+  <g fill="#000000" text-anchor="middle">
+    <!-- Mirrored rather than drawn twice, so the two halves cannot drift apart.
+         The nubs point outward, which is how `{ }` is written; turned inward
+         they read as `} {`, which is not a shape anybody types.
+
+         **The spacing is copied from god's arrangement rather than from its
+         numbers.** A brace is 19 units wide where god's pipes are 29, so setting
+         the two at god's own x huddles them in the middle of the hex with a
+         wide empty margin on either side. Pushed out to 47 they reach the same
+         outer span the siblings do, and land just fractionally wider than the
+         wordmark below, which is the proportion god has. Past about 51 they
+         begin to crowd the hexagon's upper slopes. -->
+    <use href="#eye-brace" x="-47" y="-33"/>
+    <g transform="translate(47,-33) scale(-1,1)"><use href="#eye-brace"/></g>
+
+    <use href="#nose-colon" x="0" y="12"/>
+
+    <!-- Six letters where the siblings have three, so the wordmark is set
+         smaller and stretched to a stated width rather than left to the font.
+         `fathom` carries ascenders on f, t and h and no descender at all, so
+         its weight sits high and left; the nudge right corrects the lean that
+         true centring gives it. -->
+    <text x="2" y="62" font-size="33" textLength="108" lengthAdjust="spacingAndGlyphs"
+          font-family="Avenir Next, Avenir, Futura, Century Gothic, Trebuchet MS, sans-serif"
+          font-weight="700">fathom</text>
+  </g>
+</svg>

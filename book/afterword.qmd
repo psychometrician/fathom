@@ -1,0 +1,36 @@
+# Afterword {.unnumbered}
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+This book will be wrong in places, and the interesting question is which places.
+
+The measurements will not be. They are computed by running the tools while the
+page is built, so a number here cannot drift away from the tool that produced
+it. That was the whole reason for building the book this way.
+
+What can be wrong is everything around them. A number can be correct and its
+interpretation mistaken; an axis can separate two files for a reason nobody has
+noticed yet; a threshold fitted to a gap of 8% against 23% can turn out to sit
+in the wrong place the first time a document lands between them. Several of the
+constants in the fold are exactly that shape, and each one is written down with
+the gap it was fitted to, so that the day a document falls in the middle it is
+obvious what happened.
+
+**The largest open question is still the first one.** Whether there is a
+capturable pattern under JSON work at all is not settled, and the honest state
+of it is that the evidence is encouraging and incomplete. The fold, the
+partition, the naming of keys that are data and the pricing of candidate rows do
+transfer across documents that have nothing else in common. That is more than
+was expected. It is not yet enough to build on.
+
+The strongest argument *against* the whole idea is in the corpus too, and it is
+kept there deliberately: one document that defeats the central operation is
+handled by an existing library in a single expression. A project that hides its
+best counterexample is not measuring anything.
+
+If it turns out there is no pattern, that result will be written up with the
+same care as a success, and no package will be built. That is not a consolation
+prize. **It is the answer to the question that was actually asked.**

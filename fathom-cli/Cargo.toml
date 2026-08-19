@@ -1,0 +1,14 @@
+[package]
+name = "fathom-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "fathom"
+path = "src/main.rs"
+
+[dependencies]
+fathom-core = { path = "../fathom-core" }

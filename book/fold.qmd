@@ -1,0 +1,135 @@
+---
+title: "What is in here?"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+The hypothesis this project is testing, written down before anything was
+measured:
+
+> Every existing tool makes you state **paths**, from which the row shape
+> emerges as a side effect. That is backwards. The syntax should make you state
+> **what a row is**, and find the paths itself.
+
+The first version of that claim went on to say *"and no tool helps you explore"*,
+which is measurably false. At least six try. They do not fail to describe. They
+fail like this:
+
+> **Every existing describer's output is proportional to the data. What is
+> needed is output proportional to the structure.**
+
+## The claim as a slope, not a ratio
+
+*"61% the size of the file it describes"* is one document and one point, and a
+single ratio cannot distinguish the two hypotheses. So describe a **growing
+prefix** of one document and watch what the ratio does:
+
+- proportional to the **data** → the ratio stays **flat**
+- proportional to the **structure** → the ratio **falls**, because the structure
+  stops growing while the document does not
+
+That is a measurement that could have come out the other way, and it is the
+first form of this claim that could. On the corpus's most keys-as-data file the
+existing describer is flat across a 9× growth while the probe's input grows 52×
+and its answer grows 1.9×.
+
+## The fold
+
+The operation that does it is one idea. **Objects that are siblings of the same
+kind are described once, not once each.**
+
+Here is the whole report on a Hacker News thread of 336 comments:
+
+```{r}
+#| echo: false
+say(probe("corpus/02-hn-thread/source.json"))
+```
+
+Thirteen fields, one key-set, 336 copies, and **`RECURSIVE, 13 levels`**. A
+comment thread has one record shape that contains itself, so describing it once
+per level would be O(depth) for a structure whose entire point is that it
+repeats. An earlier version printed the same thirteen fields twelve times and
+then priced the thread at 25 rows, because it only ever saw the top level.
+
+### The fold is a fixed point, not a pass
+
+Data-ness is a property of the aggregate, and the aggregate only becomes visible
+once the container above it has folded. One npm field is one to five keys per
+copy and about thirty across copies, so a test applied per instance never folds
+it and the output grows with the data. So the walk runs, folds whatever now
+looks like data, and runs again, until nothing new folds.
+
+### Reachability, or a document with no recursion reports some
+
+Two paths having the same key set is not enough to call one a repeat of the
+other. FHIR builds everything out of a handful of reusable element types, so
+`Money` is `{value, currency}` in a dozen unrelated places. A document
+containing **no recursion at all** was reported as recursive, twice.
+
+The missing condition is **reachability**: you have to be able to get there by
+following a field the ancestor actually has. A comment recurses because a
+comment has a `children`. A `total` does not contain a `total` — the step into
+`amount` leaves the shape behind and lands on something that merely looks the
+same.
+
+## Keys that are data
+
+`{"1.0.0": {...}, "1.0.1": {...}}` is an object whose keys are values. Folding
+288 of those into `<key>` is what makes the description finite — but folding
+them *silently* would hide the thing that makes the file hard, so the fold is
+always reported.
+
+Deciding which is which takes two signals and **neither works alone**: how much
+sibling copies share their key sets, and whether the values under one object
+share a type. Alone, the first calls ragged records data; alone, the second
+calls `author{name, email}` data.
+
+There is a boundary no structural signal can cross, and the tool says so rather
+than guessing. `{"text/html": …, "text/plain": …}` is data-as-keys with a
+closed, stable vocabulary, which makes it structurally a record. Those are
+reported **undecided**, and the honesty costs nothing:
+
+```{r}
+#| echo: false
+r <- probe("corpus/01-npm-registry/source.json")
+say(r[grep("KEYS THAT ARE DATA", r) : (grep("RECORD SHAPES", r) - 1)])
+```
+
+## The fold reporting that it should not have folded
+
+One `entry` array in a FHIR bundle holds 564 resources of 20 different kinds.
+Folded into one shape that is **97 fields, 87% empty, and exactly two fields
+present in all of them.**
+
+**The fold was never wrong. Its scope was.** "Sibling instances" was doing
+unexamined work — siblings by position in a document are not siblings by kind —
+and the document said so in the fold's own output, because 42 distinct key-sets
+over 564 instances is the tool reporting that it merged things which are not the
+same. Nothing read that number.
+
+Now something does:
+
+```{r}
+#| echo: false
+r <- probe("corpus/05-fhir-bundle/source.json")
+i <- grep("SPLIT ON\\s+resourceType", r)[1]
+say(r[(i - 1):(i + 7)])
+```
+
+A discriminator has to earn five guards, and every one of them is a false
+positive that appeared while fitting this. It has to be present in every
+instance, be a scalar, take few distinct values, at least halve the key-sets per
+group — **and pay in holes**, meaning the worst group must be at most half as
+empty as the fold was. That last one is the operation's own definition rather
+than a threshold: the entire reason to split is that the folded table is mostly
+holes, so a split that leaves the holes has not done the thing.
+
+::: {.unsettled}
+**The limit, and it is load-bearing.** The discriminator must live *inside* the
+record. A GitHub event archive's payloads differ by event type, but `type` sits
+on the parent event and not on the payload, so nothing here finds it. That is
+the obvious next case and it is not solved.
+:::

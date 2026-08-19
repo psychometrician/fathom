@@ -1,0 +1,371 @@
+/* ===========================================================================
+ * fathom.css — what the SCSS variables cannot say
+ *
+ * The palette lives in `theme-light.scss` and `theme-dark.scss`, as Bootstrap
+ * variables, so Quarto compiles it into the framework instead of overriding it
+ * afterwards. This file is for the things that are not variables: the hexagon
+ * ground, the sticker, the footer, the probe's fixed-width report.
+ * ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+ * There is no background pattern, and it was tried
+ *
+ * The page was tiled with a honeycomb drawn from the sticker's own geometry —
+ * the shape all three sibling packages are known by. Rendered, it was wrong:
+ * a rose lattice behind body text is decoration competing with the writing on
+ * the page a reader spends longest on, and it read as texture rather than as
+ * identity. Turning it down far enough to stop competing left it too faint to
+ * be worth the bytes.
+ *
+ * `README.md` records the same verdict about a different mark — a gaze was
+ * drawn into the sticker's braces and removed, because rendered they stopped
+ * reading as braces at all. **A mark that is wrong is worse than a mark that
+ * says nothing extra.** The identity is carried by the accent colour, the
+ * sticker and the two themes, which is enough.
+ *
+ * Written down so it is a decision rather than an omission, and so nobody adds
+ * it back believing it was never considered.
+ * ------------------------------------------------------------------------- */
+
+/* ---------------------------------------------------------------------------
+ * The hex sticker on the preface
+ *
+ * Quarto drops `book: cover-image:` in as the first thing after the landing
+ * page's opening heading, with `img-fluid`, which only caps it at the column
+ * width. The drawing is rendered at 2000px tall, so left alone it fills the
+ * column and the preface starts below the fold. A badge is meant to be taken in
+ * at a glance, so it is sized like one.
+ *
+ * The four margins are written out rather than shortened with `auto`, because
+ * Quarto's own rule floats this image right and sets a left margin to hold the
+ * prose off it. A shorthand containing `auto` replaces that value, and `auto`
+ * is zero on a float, so the paragraph runs flush against the sticker's edge.
+ * ------------------------------------------------------------------------- */
+.quarto-cover-image {
+  display: block;
+  width: 180px;
+  max-width: 44%;
+  margin: 3.5rem 0 2.25rem 2rem;
+}
+
+@media (max-width: 767.98px) {
+  .quarto-cover-image {
+    margin-top: 1.75rem;
+  }
+}
+
+/* The slogan under the sticker, set as part of the badge rather than as prose.
+ * `README.md` gives the line: it is not easy to fathom without fathom. */
+.fathom-slogan {
+  font-size: 1.22rem;
+  font-style: italic;
+  font-weight: 600;
+  margin: 0 0 1.4rem 0;
+  color: var(--bs-emphasis-color, inherit);
+}
+
+/* ---------------------------------------------------------------------------
+ * The probe's report
+ *
+ * Every report in this book is real output from `design/probe.py`, produced at
+ * render time. It is fixed-width, and its alignment carries meaning: the field
+ * lists wrap at a measured 92 characters, and `design/coverage.py` reads the
+ * indentation as structure — four spaces is a shape header, six is a `SPLIT
+ * ON`, seventeen is a continuation. Anything that reflows it destroys the thing
+ * being shown.
+ * ------------------------------------------------------------------------- */
+pre code {
+  white-space: pre;
+}
+
+/* The report is the argument, so it is given a little more room than Bootstrap
+ * gives a code block by default, and a rose edge that marks it as output rather
+ * than as something to type.
+ *
+ * **Scoped to `stdout` on purpose, and the first version was not.** A bare
+ * `.cell-output pre` also painted errors and warnings, so a broken chunk came
+ * out in the book's own accent — the page's calmest colour on the one block
+ * that means something went wrong. A theme colour is identity; a diagnostic
+ * colour is a signal, and using the first for the second is how a reader learns
+ * to skim past failures. */
+.cell-output-stdout > pre {
+  border-left: 3px solid var(--bs-border-color, #e6dae0);
+  padding-left: 0.9rem;
+}
+
+body.quarto-light .cell-output-stdout > pre { border-left-color: #e6a3c4; }
+body.quarto-dark  .cell-output-stdout > pre { border-left-color: #6d4356; }
+
+/* ---------------------------------------------------------------------------
+ * Diagnostics: a failure looks like a failure
+ *
+ * Two treatments, because the two mean different things. An **error** is fatal
+ * and the chunk produced nothing. A **warning** is advice and the output is
+ * right there beside it. Giving both the page's rose would flatten that
+ * distinction into the accent and say neither.
+ *
+ * The colours are the household's diagnostic pair, taken from gog's book rather
+ * than invented here: `#e15759` red and `#f28e2b` orange, both from a
+ * colour-blind-safe categorical palette. They are deliberately **not** either
+ * package's brand accent — an accent marks something you can act on, and a
+ * diagnostic marks something that went wrong. Sharing them keeps a reader who
+ * moves between the three books reading one system.
+ *
+ * A tint and a left rule on a block that already exists — no card, no icon, no
+ * title bar, nothing that has to be dismissed to keep reading. The rule carries
+ * the same information as the fill, so the two kinds stay distinguishable
+ * without relying on hue alone.
+ * ------------------------------------------------------------------------- */
+
+.cell-output-error > pre {
+  background-color: #fceeee;
+  border-left: 3px solid #e15759;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 3px 3px 0;
+}
+
+.cell-output-stderr > pre {
+  background-color: #fef4ea;
+  border-left: 3px solid #f28e2b;
+  padding: 0.6rem 0.8rem;
+  border-radius: 0 3px 3px 0;
+}
+
+/* The `<code>` inside inherits the tint rather than painting its own. Quarto
+ * gives a bare `pre > code` a transparent background already, but saying so
+ * here stops a theme change from putting a grey rectangle inside the tinted
+ * one. */
+.cell-output-error > pre > code,
+.cell-output-stderr > pre > code {
+  background-color: transparent;
+}
+
+/* The two tints at dark-page weight. The left rules keep their full-strength
+ * colours, since the rule is what tells an error from a warning without relying
+ * on the fill. */
+body.quarto-dark .cell-output-error > pre {
+  background-color: #2c1c1c;
+  border-left-color: #e15759;
+}
+
+body.quarto-dark .cell-output-stderr > pre {
+  background-color: #2c2418;
+  border-left-color: #f28e2b;
+}
+
+body.quarto-dark .cell-output-error > pre > code,
+body.quarto-dark .cell-output-stderr > pre > code {
+  color: #ece4e8;
+}
+
+/* ---------------------------------------------------------------------------
+ * The theme toggle
+ *
+ * Quarto ships the control as a switch and nothing else, which says that
+ * something can be flipped without saying what. A sun and a moon say which way
+ * you are going, and they cost no request: Bootstrap Icons is already loaded by
+ * the theme, so the glyph is a `::before` on the link and the switch it draws
+ * is left alone. `\f5a1` is `sun-fill`, `\f495` is `moon-stars-fill`.
+ * ------------------------------------------------------------------------- */
+
+.quarto-color-scheme-toggle {
+  display: inline-flex;
+  align-items: center;
+}
+
+.quarto-color-scheme-toggle::before {
+  font-family: "bootstrap-icons", sans-serif;
+  content: "\f5a1";
+  font-size: 1.22rem;
+  margin-right: 0.45rem;
+  /* No `vertical-align`. The link is a flex container, so the two glyphs are
+   * centred against each other by `align-items` and a baseline nudge only
+   * fights it. `line-height: 1` does matter: the sun is a font glyph and
+   * carries a line box, while the switch beside it is a background image with
+   * no ascender or descender, so an inherited 1.7 sits the two on different
+   * centres. */
+  line-height: 1;
+}
+
+body.quarto-dark .quarto-color-scheme-toggle::before {
+  content: "\f495";
+}
+
+/* The switch is drawn by `background-image` on the `::before` of this `<i>`,
+ * and the `<i>` itself is the flex item. Centring the link's children lines up
+ * the `<i>` box, not the picture inside it. */
+.quarto-color-scheme-toggle .bi {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+}
+
+/* Both sidebar controls, sized to be hit rather than to decorate. The reader
+ * mode toggle is the other one, and it was as easy to miss as the theme switch:
+ * Quarto renders both and styles neither. */
+.quarto-navigation-tool {
+  font-size: 1.15rem;
+  opacity: 0.92;
+}
+
+.quarto-navigation-tool:hover { opacity: 1; }
+
+/* ---------------------------------------------------------------------------
+ * The footer
+ *
+ * Licences on the left, because they are the small print. The links on the
+ * right, because that is what a reader who has reached the end is looking for.
+ * Both regions are Quarto's; what follows is their sizing, their colour and how
+ * they stack on a phone.
+ * ------------------------------------------------------------------------- */
+
+/* The footer is held to the column everything above it is held to.
+ *
+ * Quarto gives the footer `grid-column: screen-start/screen-end`, so on a wide
+ * monitor the licences sat against the left edge of the glass and the icons
+ * against the right, while everything above them — sidebar, prose, contents —
+ * was held in a column in the middle. The two read as unrelated pages.
+ *
+ * **The hairline is held in with the text, and that is a departure from gog's
+ * blog**, which keeps its bands spanning the window because they carry a
+ * background colour and a full-width band is the point of them. This footer is
+ * a rule and two rows of small text on the page's own ground, so a rule running
+ * out past the writing on both sides is just a longer line. Measured on a
+ * 2400px window before and after, and the short version is that the constrained
+ * rule reads as the bottom edge of the page and the full-width one reads as a
+ * horizon behind it.
+ *
+ * gog's BOOK has no rule of this kind at all, because it reasoned a book "has
+ * no such column to line up with". It does — Quarto's `page-columns` grid
+ * names it.
+ *
+ * **1300px is derived from that grid rather than chosen.** `body.floating`
+ * lays out `page-start` to `page-end` as
+ * `50 + 150 + 50 + 1.5em + calc(800px - 3em) + 1.5em + 50 + 150 + 50`, and at
+ * this book's 17px base that is 1300 exactly. Both the grid and this bar are
+ * centred in the same box, so the footer's edges land on the sidebar's left
+ * and the margin column's right. The blog reached 1135 by the same method on
+ * its own layout; the number differs because the layout does.
+ *
+ * `footer.footer .nav-footer` rather than a bare class: the framework sets the
+ * side padding with `footer.footer .nav-footer, #quarto-header>nav`, which is
+ * (0,2,1) and beats a bare class.
+ * ------------------------------------------------------------------------- */
+/* **Scoped to the width where the cap actually binds, and the first version was
+ * not.** Zeroing the side padding unconditionally put the licences flush
+ * against the window edge at 1280px, where the grid is still narrower than
+ * 1300 so `max-width` does nothing and only the lost gutter showed. Caught on
+ * a screenshot, not by reading.
+ *
+ * 1351px is where the page region reaches its full 1300: the grid spends
+ * `1.5em` outside `screen-start-inset` at each end, and 25.5 + 1300 + 25.5 is
+ * 1351. Below that the `5fr` gutters are zero, the content column is doing the
+ * shrinking, and Quarto's own padding is already right. */
+@media (min-width: 1351px) {
+  footer.footer .nav-footer {
+    max-width: 1300px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 100%;
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+/* Each licence is one unit. Left to itself the line breaks wherever it runs out
+ * of room, which puts "Apache 2.0." alone on a second line looking like a
+ * mistake. As inline blocks the two sentences can only break BETWEEN each
+ * other, so a narrow footer gets two whole lines instead of one and a
+ * fragment. */
+.nav-footer .licence {
+  display: inline-block;
+  margin-right: 0.5rem;
+}
+
+/* The licence text gets the room it needs and the icons take only their own
+ * width, rather than the two regions splitting the bar evenly. */
+.nav-footer-left {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  padding-left: 0;
+}
+
+.nav-footer-right {
+  flex: 0 0 auto;
+  padding-right: 0;
+}
+
+/* The follow row. Bigger than the licence text beside it, because these are the
+ * only things in the footer anyone clicks.
+ *
+ * Hover changes the COLOUR rather than only the opacity. Raising opacity moves
+ * a muted grey toward a slightly less muted grey, which on a busy page is not
+ * enough to read as a response. */
+.nav-footer .nav-item .nav-link {
+  font-size: 1.18rem;
+  padding: 0.2rem 0.42rem;
+  opacity: 1;
+  transition: color 0.14s ease, transform 0.14s ease;
+}
+
+body.quarto-light .nav-footer .nav-item .nav-link { color: #8b7c83; }
+
+body.quarto-light .nav-footer .nav-item .nav-link:hover,
+body.quarto-light .nav-footer .nav-item .nav-link:focus-visible {
+  color: #120e10;
+  transform: translateY(-2px);
+}
+
+body.quarto-dark .nav-footer .nav-item .nav-link { color: #8d7e86; }
+
+body.quarto-dark .nav-footer .nav-item .nav-link:hover,
+body.quarto-dark .nav-footer .nav-item .nav-link:focus-visible {
+  color: #fff5fa;
+  transform: translateY(-2px);
+}
+
+.nav-footer {
+  border-top: 1px solid var(--bs-border-color, #e6dae0);
+  font-size: 0.92rem;
+  opacity: 0.85;
+}
+
+.quarto-dark .nav-footer { border-top-color: #362c32; }
+
+/* On a phone the two regions stack and centre: icons first, because they are
+ * what someone reaching the end of a page is looking for, and the licences
+ * underneath as the small print they are. */
+@media (max-width: 575px) {
+  .nav-footer {
+    flex-direction: column;
+    align-items: center;
+    row-gap: 0.15rem;
+  }
+
+  .nav-footer-right { order: 1; }
+  .nav-footer-left  { order: 2; text-align: center; }
+
+  .nav-footer .licence {
+    display: block;
+    margin-right: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * A callout for the one thing this book must never let a reader forget: which
+ * claims are measured and which are still open. `VERDICT.md` owns the state;
+ * this marks the places in the prose where the state is not settled.
+ * ------------------------------------------------------------------------- */
+.unsettled {
+  border-left: 3px solid #e6a3c4;
+  background: rgba(246, 200, 221, 0.16);
+  padding: 0.85rem 1.1rem;
+  border-radius: 0 8px 8px 0;
+  margin: 1.4rem 0;
+}
+
+body.quarto-dark .unsettled {
+  border-left-color: #a8617f;
+  background: rgba(246, 200, 221, 0.07);
+}

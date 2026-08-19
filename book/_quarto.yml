@@ -1,0 +1,195 @@
+project:
+  type: book
+  output-dir: _book
+
+book:
+  # **"Probing JSON", and the verb is the decision.** The siblings are "gog: A
+  # Grammar of Graphics" and "god: A Grammar of Data", so a reader meets three
+  # spines from one household — but `README.md` is emphatic that fathom is NOT a
+  # grammar, has no kernel, no laws and no closed vocabulary, and a title
+  # claiming one would promise a structure it may never want. Not sharing the
+  # siblings' noun phrase is the point rather than a lapse.
+  #
+  # **"A Sounding of JSON" was tried first and fails the project's own test.**
+  # `README.md` chose the name `fathom` because "the understanding sense is a
+  # dead metaphor rather than a live one". Sounding is the reverse: its dominant
+  # everyday sense is audio, so the title invites a reader to think about sound
+  # before depth. The rule that picked the name rejects it.
+  #
+  # `probe` is the right word and is more than the prototype's filename:
+  # `design/implementation.md` specifies it as a **CLI verb of the real
+  # package** — "probe → a small JSON summary on stdout". It also reads twice
+  # over, which suits this book: the tool probes documents, and the project
+  # probes a question it has not yet answered.
+  title: "fathom: Probing JSON"
+  subtitle: "One way of seeing a JSON document. An investigation, and the package it earned."
+
+  # The hex sticker, drawn as geometry by the author. `images/fathom-hex.svg` is
+  # the source and `rsvg-convert -h 2000` renders it. Quarto resolves
+  # `cover-image` relative to THIS directory and the drawing lives one level up
+  # beside its siblings, so `book/images/` carries a copy.
+  #
+  # **This said `R/copy-assets.R` stages it until 2026-08-19, and there is no
+  # such script** — the copy is made by hand, and naming a mechanism that does
+  # not exist is worse than admitting the duplication. `images/architecture.svg`
+  # is the second file kept this way.
+  #
+  # Vector would be the obvious choice and is wrong here for the same reason it
+  # is wrong in gog's book: the wordmark across the bottom is set in a face that
+  # ships on one operating system, so a vector copy asks each reader's browser
+  # for a font most of them do not have. Rendering it once settles the
+  # letterform for everybody.
+  cover-image: images/fathom-hex.png
+  cover-image-alt: >-
+    The fathom hex sticker. A rose hexagon with a black border, holding a face
+    built from JSON's own marks: an opening and a closing brace as the two eyes,
+    a colon as the nose, and the package name as the mouth.
+
+  # The human owns the thinking and the decisions; the model wrote code and put
+  # the text into English. Same division of labour gog's preface states, and the
+  # same reason for naming it: a reader should know what wrote what.
+  author:
+    - "psychometrician"
+    - "Claude Opus 5"
+    - "Claude Fable 5"
+  date: "2026-08-10"
+
+  # **No `repo-url` and no `site-url`, and their absence is a fact rather than
+  # an oversight.** `CLAUDE.md` records that this is a local repository with no
+  # remote and that one is not to be added without asking. gog's book carries
+  # both keys; copying them here would put a URL in the page metadata, in the
+  # sitemap and behind a "Report an issue" link that resolves to nothing.
+
+  reader-mode: true
+
+  # **The shape is the three things the one verb answers**, which is the same
+  # list `README.md` gives — is this sound, what is in here, what could one row
+  # be — with the problem before it and the machinery after. Part titles are
+  # plain English; each part's introduction says what it covers.
+  chapters:
+    - index.qmd
+
+    - part: parts/problem.qmd
+      chapters:
+        - why-json.qmd
+        - hard.qmd
+
+    - part: parts/method.qmd
+      chapters:
+        - questions.qmd
+        - corpus.qmd
+
+    - part: parts/command.qmd
+      chapters:
+        - health.qmd
+        - fold.qmd
+        - rows.qmd
+
+    - part: parts/words.qmd
+      chapters:
+        - vocabulary.qmd
+
+    - part: parts/core.qmd
+      chapters:
+        - architecture.qmd
+        - parity.qmd
+
+    - part: parts/reasons.qmd
+      chapters:
+        - discipline.qmd
+
+    - afterword.qmd
+    - references.qmd
+
+  # The footer. Licences on the left as the small print they are, the links on
+  # the right because that is what a reader who has reached the end of a chapter
+  # is looking for. `fathom.css` holds how it looks; this is what is in it.
+  #
+  # **Settled 2026-08-10: the same pair the siblings carry.** The repository now
+  # has a `LICENSE` (Apache 2.0) and a `NOTICE`, and `book/LICENSE.md` sets out
+  # the split and what it does NOT cover.
+  #
+  # The exception is worth knowing about from here, because it is the one thing
+  # in this book the NonCommercial term cannot reach: **`apa.csl` is CC BY-SA
+  # 3.0**, and CC BY-SA forbids adding restrictions, of which NonCommercial is
+  # one. It travels under its own terms. The same is true of every corpus
+  # document whose output these pages print.
+  page-footer:
+    left: |
+      [Prose licensed [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/).]{.licence}
+      [Code samples licensed [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0).]{.licence}
+    # The same four destinations in the same order the siblings use. **The X and
+    # Bluesky accounts are the author's rather than gog's**, which is settled by
+    # god's book carrying the identical pair and labelling them "psychometrician
+    # on X" — one person, three projects, one place to follow them. That is why
+    # they can be named here without inventing anything, and the aria-labels say
+    # whose they are rather than which package's.
+    right:
+      - icon: twitter-x
+        href: https://x.com/gogdeveloper
+        aria-label: "psychometrician on X"
+        target: _blank
+      - icon: bluesky
+        href: https://bsky.app/profile/gogdeveloper.bsky.social
+        aria-label: "psychometrician on Bluesky"
+        target: _blank
+      # The profile rather than this repository, which has no remote to point at.
+      - icon: github
+        href: https://github.com/psychometrician
+        aria-label: "psychometrician on GitHub"
+        target: _blank
+      - icon: journal-text
+        href: https://psychometrician.github.io/
+        aria-label: "psychometrician, the blog"
+        target: _blank
+
+bibliography: references.bib
+csl: apa.csl
+
+language:
+  title-block-published: "First published"
+  title-block-modified: "Updated"
+
+format:
+  html:
+    # Two themes and a toggle. Declaring both is what makes Quarto write the
+    # switch and put `quarto-light` / `quarto-dark` on the body, which is what
+    # `fathom.css` keys its dark rules off.
+    theme:
+      light: [cosmo, theme-light.scss]
+      dark: [darkly, theme-dark.scss]
+    css: fathom.css
+    # Sets every package name in code font, in prose, from a list of names
+    # rather than from backticks a writer has to remember. Same filter and same
+    # mechanism as gog's; the list and the exemptions are fathom's, and the
+    # file says why `fathom` itself needed one.
+    filters:
+      - package-names.lua
+    code-copy: true
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    # The probe's whole argument is that its output is proportional to the
+    # structure. A report that is 24 lines has to be shown as 24 lines, so a
+    # block never scrolls its right-hand edge out of view.
+    code-overflow: wrap
+
+# knitr rather than jupyter, and it is not a preference. **Every number in this
+# book is computed by running the real tools at render time**, which means
+# shelling out to `uv run design/probe.py` and to `target/release/fathom`. That
+# needs R and knitr, both of which are installed here; the jupyter engine would
+# need `ipykernel`, which is not. `R/setup.R` holds the two wrappers.
+#
+# The reason for computing rather than quoting is `CLAUDE.md`'s ownership rule.
+# A book that types out "336 copies" is a sixth place for a number that already
+# has an owner, and this repository has had a number go stale in one of two
+# places five times. A book that RUNS the probe cannot disagree with it.
+engine: knitr
+
+execute:
+  echo: true
+  warning: false
+  message: false
+  # Cached, because a full render otherwise re-runs the probe on every corpus
+  # file it touches. `_freeze/` is gitignored; delete it to force a re-measure.
+  freeze: auto

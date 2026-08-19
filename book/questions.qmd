@@ -1,0 +1,45 @@
+---
+title: "The fixed questions"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+Every file is asked the same questions, in every tool, or nothing is comparable.
+The list is `QUESTIONS.md` in the repository, and it is the specification for
+the vocabulary as much as it is the method:
+
+> **A word belongs in fathom only if removing it makes one of the fixed
+> questions unanswerable on at least one corpus file. No word is added without
+> naming the question it answers and the file that proves it.**
+
+That makes the question list the vocabulary's bound. It also explains why one
+existing library has roughly 180 exports and fathom expects to have a handful:
+that library answers questions nobody in this corpus asked.
+
+```{r}
+#| echo: false
+q <- readLines(file.path(ROOT, "QUESTIONS.md"))
+say(grep("^\\s*[0-9]+\\.", q, value = TRUE))
+```
+
+## Two rules that make the answers mean something
+
+**Score the exploring separately from the extracting.** The whole premise is
+that exploring an unknown document is where the cost is and that nobody measures
+it. A session that records only how the extraction went has measured the half
+that was never in question. So for each file and tool: how long until you could
+*state* the shape, and what you had to run to get there.
+
+**A question added after the feature it describes is marked as such.** Scoring
+another tool "cannot" on a question written to match something fathom had just
+decided to do is circular, and a reader needs to be able to tell those apart
+from the questions that predate the design.
+
+## "Cannot" is the most useful cell in the grid
+
+A tool that cannot answer a question records that, with the reason, and moves
+on. An empty cell is the least useful thing an attempt file can contain, because
+it does not distinguish *the tool refused* from *nobody tried*.

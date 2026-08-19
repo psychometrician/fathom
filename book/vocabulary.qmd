@@ -1,0 +1,177 @@
+---
+title: "Four words, two languages"
+---
+
+```{r}
+#| include: false
+source("R/setup.R")
+```
+
+::: {.unsettled}
+**None of this is a package yet, and the distinction matters more here than
+anywhere else in the book.** There are now **three** implementations of these
+four words and not one of them ships: the Python prototypes in `design/`, a
+hand-written R re-implementation, and the Rust core. What is missing is the
+thin R and Python packages that would call the core — and until those exist,
+nobody can install any of it.
+
+The three agree on every sentence in this chapter. **That is a fact about the
+plumbing and not about the vocabulary**, which is the distinction the end of
+this chapter is about.
+:::
+
+## `rows` — say what a row is, not where it lives
+
+The hypothesis in one line: every existing tool makes you state **paths**, from
+which the row shape emerges as a side effect. `rows` makes you state what a row
+is.
+
+::: {.panel-tabset}
+
+## R
+
+```r
+rows(doc, "versions.*")
+```
+
+## Python
+
+```python
+rows(doc, "versions.*")
+```
+
+:::
+
+`*` is "every key here, whatever it is called" — which is what makes it work on
+a document whose keys are data. The keys it matched come back beside the
+records, because on a keys-as-data document **the key is the most important
+column** and a tool that discards it has thrown away the version number.
+
+## `first_present` — a priority order, not a set
+
+The first of these paths that is actually there.
+
+::: {.panel-tabset}
+
+## R
+
+```r
+first_present(node, "valueQuantity", "valueString", "valueCodeableConcept",
+              default = NULL)
+```
+
+## Python
+
+```python
+first_present(node, "valueQuantity", "valueString", "valueCodeableConcept",
+              default=None)
+```
+
+:::
+
+**Both halves of the name carry something people get wrong.** `first` says the
+arguments are a priority order rather than a set. `present` says the only value
+skipped is a missing one — **so a zero comes back.**
+
+This is the first word shared with the sibling project, where it is the same
+idea over a table rather than a document. Sharing a word across two projects
+needs a stated owner and a test on both sides from the day it is shared, or the
+two drift and the drift is invisible.
+
+## `take` — one row per record, one column per path
+
+::: {.panel-tabset}
+
+## R
+
+```r
+take(records, "name", "author.email", "dist.tarball")
+```
+
+## Python
+
+```python
+take(records, "name", "author.email", "dist.tarball")
+```
+
+:::
+
+**Nothing else is built**, and that is the whole point. The measured cost claim
+is that building only the columns you asked for skips **97.9%** of the cells a
+general-purpose flattener would materialise.
+
+## `where` — find the value, not the path
+
+The verb for a document you have never seen: every path whose value matches,
+**folded**.
+
+::: {.panel-tabset}
+
+## R
+
+```r
+where(doc, "url")
+```
+
+## Python
+
+```python
+where(doc, "url")
+```
+
+:::
+
+Folded, because otherwise it is the O(data) failure arriving through the front
+door — 5,511 matching paths in one corpus file, which is a wall of text rather
+than an answer. It reports the **shapes** instead.
+
+## The claim, checked
+
+The two implementations were written independently and are diffed on real
+documents. This is the harness running now:
+
+```{r}
+#| echo: false
+say(at_root(system2("uv", c("run", "design/parity.py"),
+                    stdout = TRUE, stderr = FALSE)))
+```
+
+## Why a second implementation was written at all
+
+This looks like exactly the mistake the architecture forbids. **One Rust core,
+so that two hand-written copies can never drift** — and here are two
+hand-written copies.
+
+The distinction is that one of them is a probe rather than a product, and it
+answers a question the core **cannot**:
+
+> One core makes the two languages agree by construction. That proves the
+> plumbing. **It cannot tell you whether the vocabulary is right.** If
+> `rows("versions.*")` reads naturally in Python and awkwardly in R, a shared
+> core delivers the awkward reading to R users faithfully and forever. The port
+> does not test that assumption, it locks it in.
+
+The only way to test it is to have the words re-derived from the written
+notation by another route, and see whether they land in the same place. They
+did, on every sentence above.
+
+**Two hand-written copies must never be *shipped*, because they drift
+invisibly. Writing one as a probe and throwing it away costs nothing and buys
+the one piece of evidence the architecture assumes.**
+
+### The core now answers these sentences, and the R copy has not been deleted
+
+The plan said `design/fathom.R` goes the day the core answers them. It does —
+`rows` and `where` in Rust land on the same figures as both the Python and the
+R, on all nineteen.
+
+**It is kept anyway, and the reason is worth more than the rule.** The same plan
+keeps the parity harness by *retargeting* it from two implementations to two
+bindings of one core. There are no bindings yet. Deleting the R today would
+break that harness and leave the core checked against one implementation where
+it is currently checked against two — trading a working check for nothing, to
+be tidy.
+
+It goes when the R package exists to replace it. Written down as a deliberate
+deferral, because a plan followed to the letter at the cost of the thing it was
+protecting is not being followed at all.

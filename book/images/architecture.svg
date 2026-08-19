@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 330" width="1040" height="330"
+     role="img" aria-labelledby="arch-title arch-desc">
+  <title id="arch-title">How a document is fathomed</title>
+  <desc id="arch-desc">Two language bindings, one for R and one for Python, each invoke the same
+  command line as a subprocess. fathom-cli passes the path to fathom-core, the engine, which reads
+  the JSON document itself and returns text: a description of the document, or a table. The document
+  never travels through a binding.</desc>
+
+  <rect width="1040" height="330" rx="18" fill="#F6C8DD"/>
+
+  <!-- The two bindings, in each language's own colour. Neither has a dependency,
+       and neither is allowed to parse JSON — hence the document's arrow below,
+       which reaches the engine without passing through either of them. -->
+  <g font-family="Menlo,Consolas,monospace" font-size="17" font-weight="600">
+    <rect x="30" y="70"  width="210" height="46" rx="23" fill="#b6b8bc"/>
+    <text x="135" y="99" text-anchor="middle" fill="#16130f">r/</text>
+
+    <rect x="30" y="140" width="210" height="46" rx="23" fill="#3771a2"/>
+    <text x="135" y="169" text-anchor="middle" fill="#ffffff">python/</text>
+  </g>
+
+  <!-- Both bindings converge on one entry point: they hand back its bytes and
+       add nothing, so the two languages agree by construction. -->
+  <g fill="none" stroke="#16130f" stroke-width="2.4" opacity="0.55">
+    <path d="M240 93  H274 Q290 93  290 109 V128"/>
+    <path d="M240 163 H274 Q290 163 290 147 V128"/>
+  </g>
+
+  <text x="150" y="216" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="14" font-style="italic" fill="#6b4457">no dependencies, and
+    <tspan x="150" dy="17">neither parses JSON</tspan>
+  </text>
+
+  <defs>
+    <marker id="tip" viewBox="0 0 10 10" refX="9" refY="5"
+            markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#16130f" opacity="0.65"/>
+    </marker>
+  </defs>
+
+  <g fill="none" stroke="#16130f" stroke-width="2.4" opacity="0.65" marker-end="url(#tip)">
+    <path d="M290 128 H330"/>
+    <path d="M542 128 H590"/>
+    <path d="M800 128 H852"/>
+  </g>
+
+  <g font-family="Menlo,Consolas,monospace" font-size="18" font-weight="600">
+    <rect x="336" y="105" width="200" height="46" rx="23" fill="#16130f"/>
+    <text x="436" y="135" text-anchor="middle" fill="#F6C8DD">fathom-cli</text>
+
+    <rect x="596" y="105" width="200" height="46" rx="23" fill="#16130f"/>
+    <text x="696" y="135" text-anchor="middle" fill="#F6C8DD">fathom-core</text>
+  </g>
+
+  <text x="436" y="176" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="14" font-style="italic" fill="#6b4457">a subprocess,
+    <tspan x="436" dy="17">and a pipe</tspan>
+  </text>
+
+  <!-- The document reaches the ENGINE, not the binding. Base R cannot represent
+       JSON's number range, so a parser in each binding would make the two
+       languages disagree about a value the health verb exists to warn about. -->
+  <g font-family="Menlo,Consolas,monospace" font-size="16" font-weight="600">
+    <rect x="596" y="252" width="200" height="42" rx="10" fill="#ffffff" stroke="#16130f"
+          stroke-width="2" stroke-opacity="0.5"/>
+    <text x="696" y="279" text-anchor="middle" fill="#16130f">your document</text>
+  </g>
+  <g fill="none" stroke="#16130f" stroke-width="2.4" opacity="0.65" marker-end="url(#tip)">
+    <path d="M696 252 V163"/>
+  </g>
+  <text x="884" y="279" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="14" font-style="italic" fill="#6b4457">JSON, NDJSON
+    <tspan x="884" dy="17">or gzip — read once</tspan>
+  </text>
+
+  <!-- What comes back is text. An extract may be any shape; the rectangular ones
+       are what flow onward into god. -->
+  <g font-family="Helvetica,Arial,sans-serif" font-size="17" font-weight="600" fill="#16130f">
+    <text x="862" y="118">a description</text>
+    <text x="862" y="152">or a table</text>
+  </g>
+
+  <text x="520" y="44" text-anchor="middle" font-family="Helvetica,Arial,sans-serif"
+        font-size="15" font-style="italic" fill="#6b4457">One core, so the two languages agree by construction</text>
+</svg>

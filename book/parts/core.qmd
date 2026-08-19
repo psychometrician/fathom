@@ -1,0 +1,18 @@
+# The core
+
+Everything up to here is about documents. This part is about the machine.
+
+The decision is one sentence: **one Rust core, one CLI, and thin R and Python
+packages that invoke it as a subprocess. No FFI.** That is the architecture the
+sibling projects already use, so the largest cost of it — shipping Rust to CRAN
+— has been paid once in this household already.
+
+The two chapters are the decision and the check on it. **Architecture** is why a
+core, why a subprocess rather than a binding, and the one place the arrangement
+strains. **Parity** is the part that makes any of it believable: the Python
+prototype is not replaced by the port, it becomes the *oracle*, and the port is
+finished when the difference between them is empty.
+
+That distinction is the whole discipline of a rewrite. A port that improves what
+it is copying cannot be verified against it, because the improvement and the
+regression arrive as the same diff.

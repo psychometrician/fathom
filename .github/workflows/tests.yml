@@ -1,0 +1,152 @@
+# Every scorer this repository has, on every push and every pull request.
+#
+# Until this file, nothing in CI proved the core, either binding, or parity —
+# and everything had only ever run on one macOS laptop. A book that renders is
+# not evidence the reports are right.
+#
+# What runs, cheapest evidence first:
+#
+#   check.py            the health verb over generated cases, both sides
+#   parity.py           the Rust core against `design/probe.py`, four stages
+#   pipe.py             every verb against a reader that stops reading
+#   streaming.py        the streaming read against the oracle
+#   candidates.py       every row shape the menu NAMES, resolved and rebuilt
+#   bindings.py         R and Python against the binary, all seven words
+#
+# **`bindings.py` is slow on purpose and must not be trimmed to make it quick.**
+# It found a 370x defect that nothing faster would have: a binding returning
+# correct data for 22 seconds on a table that fits in one line. It takes about
+# eighteen minutes on the author's laptop, which is why this job's timeout is
+# generous rather than tight.
+#
+# Actions are pinned to commits, the same way `book.yml` pins them, so the two
+# workflows age together; the tag each pin was taken from is beside it.
+
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: dtolnay/rust-toolchain@4360b52568e2003a75bf9bc1d59f33a8e3fc893c # stable
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2
+
+      # Built explicitly: every scorer below finds the binary by walking up to
+      # `target/release/fathom`, and a passing `cargo test` is not evidence the
+      # binary was rebuilt.
+      - name: Build the core
+        run: |
+          cargo build --release -p fathom-cli
+          test -x target/release/fathom
+          ./target/release/fathom --help | head -3
+
+      # **There is deliberately no `cargo test` step, and that is not an
+      # oversight.** The core carries zero `#[test]` blocks because its
+      # correctness is DEFINED as agreeing with `design/probe.py`: a
+      # disagreement is the port's fault by construction, which is what
+      # `parity.py` measures on every corpus document and every generated case.
+      # A `cargo test` here would compile, find nothing to run, and print a
+      # green `0 passed` — a step that did not run, reported as one that passed.
+
+      - uses: r-lib/actions/setup-r@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          use-public-rspm: true
+
+      # The R package has no dependencies at all, which is the architecture's
+      # claim rather than an omission — `bindings.py` drives it with base R only.
+      - uses: r-lib/actions/setup-r-dependencies@d3c5be51b12e724e68f33216ca3c148b66d5f0b6 # v2
+        with:
+          working-directory: r
+
+      - name: The Python side
+        run: |
+          python3 -m pip install --quiet uv
+          uv sync --quiet
+
+      # The oracle is frozen and the hash is the promise. A green run against a
+      # probe that does not match the freeze block proves nothing about the build
+      # `CLAUDE.md` says is frozen.
+      # **Conditional, and the skip is announced rather than silent.** The freeze
+      # block lives in `CLAUDE.md`, which is part of the working record and is
+      # not published with this repository. Where it is present this is a real
+      # check; where it is absent, saying so is the honest result — a check that
+      # did not run is not a check that passed, which is the distinction this
+      # project makes everywhere else.
+      - name: The freeze block is telling the truth
+        run: |
+          if [ ! -f CLAUDE.md ]; then
+            echo "CLAUDE.md is not in this repository - the freeze block lives"
+            echo "with the working record. NOT CHECKED here, by design."
+            exit 0
+          fi
+          want=$(grep -oE '^# [0-9a-f]{40}' CLAUDE.md | head -1 | tr -d '# ')
+          got=$(git hash-object design/probe.py)
+          echo "recorded $want"
+          echo "actual   $got"
+          test "$want" = "$got" || { echo "::error::probe.py does not match the freeze block"; exit 1; }
+
+      # `test/cases/` is gitignored: the generator is the artifact and the tiny
+      # files are not. Nothing below can run until it has been rebuilt, and
+      # `parity.py` reads the same manifest.
+      - name: Generate the health-verb cases
+        run: uv run test/generate.py
+
+      # **Five corpus documents are gitignored** — 14, 20, 21, 25 and 26 ship a
+      # `fetch.sh` because they are over the 5 MB rule, and 26 is 870 MB raw. So
+      # CI necessarily grades a smaller corpus than a laptop does, and every
+      # scorer below skips a document it cannot open rather than failing.
+      #
+      # That is the right behaviour and it is also how a green run comes to read
+      # as more than it is. This step says out loud which documents this run did
+      # NOT see, so the number in the log is the number that was measured.
+      - name: Say which corpus documents this run cannot see
+        run: |
+          missing=0
+          for d in corpus/*/; do
+            e=$(basename "$d")
+            if [ ! -f "$d/source.json" ] && [ ! -f "$d/source.jsonl" ] \
+               && [ ! -f "$d/source.json.gz" ]; then
+              echo "  not present: $e (fetch.sh only)"
+              missing=$((missing+1))
+            fi
+          done
+          echo "corpus: $(ls -d corpus/*/ | wc -l) entries, $missing without a committed source"
+
+      - name: The health verb, both sides
+        run: |
+          uv run test/check.py
+          uv run test/check.py --rust
+
+      - name: Parity — the core against the oracle
+        run: uv run test/parity.py
+
+      - name: A reader that stops reading
+        run: uv run test/pipe.py
+
+      - name: The streaming read
+        run: uv run test/streaming.py
+
+      - name: Every row shape the menu names
+        run: uv run test/candidates.py
+
+      # Last because it is the long one. Everything above fails in minutes; this
+      # one takes most of the job's wall clock and is the check the architecture's
+      # central promise actually rests on.
+      - name: The two bindings against the binary
+        run: uv run test/bindings.py

@@ -1,0 +1,45 @@
+# Line endings, and the exception matters more here than the rule.
+#
+# **The rule.** Source and prose are LF everywhere, enforced rather than left to
+# each machine's `core.autocrlf`. A file that arrives with CRLF makes every later
+# diff show the whole file as changed, and this project's harnesses compare
+# output byte for byte — `parity.py` on the rendered report, `bindings.py` on
+# what each language returns — so a stray carriage return there is a failure with
+# no visible cause.
+*                       text=auto eol=lf
+
+# **The exception, and it is load bearing.** The corpus is not source, it is
+# EVIDENCE: real documents downloaded on a stated day, whose bytes are the thing
+# being measured. Three tracked files carry CR deliberately —
+# `16-movie-ratings/source.json` and its two `next-*.json` siblings — and that
+# file is rendered in the book's health chapter. Normalising them would rewrite
+# the specimen and silently move every number recorded against entry 16.
+#
+# This is not hypothetical for this project specifically: the health verb REPORTS
+# line endings, `test/generate.py` emits a `format/crlf.ndjson` case on purpose,
+# and `test/streaming.py` exists because a CRLF is one of the three things that
+# must fall back rather than stream. A repository that measures line endings must
+# not let its version control edit them.
+corpus/**               -text
+r/inst/bin/**           -text
+
+# Binary, so git never rewrites a byte inside them and never tries to diff one.
+*.png                   binary
+*.jpg                   binary
+*.jpeg                  binary
+*.gz                    binary
+*.ico                   binary
+*.pdf                   binary
+*.woff                  binary
+*.woff2                 binary
+*.ttf                   binary
+
+# Generated from `images/fathom-hex.svg`; collapse it in GitHub diffs rather than
+# showing a thousand lines of drawn geometry on every touch.
+book/images/*.svg       linguist-generated=true
+
+# The corpus is data, not the project's source. Left in the language statistics
+# it would report fathom as a JSON repository, which is true of the bytes and
+# false of the work.
+corpus/**               linguist-vendored=true
+book/_book/**           linguist-generated=true
