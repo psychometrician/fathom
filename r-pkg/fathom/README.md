@@ -1,4 +1,4 @@
-# fathom — see what is in a JSON document, for Python
+# fathom — see what is in a JSON document, for R
 
 **Fathom first. Then parse.**
 
@@ -10,10 +10,10 @@ same kind of thing.
 fathom is the first thing you reach for. You point it at a document you have
 never seen and it tells you what you are dealing with.
 
-```python
-import fathom
+```r
+library(fathom)
 
-print(fathom.fathom("thread.json"))
+fathom("thread.json")
 ```
 
 ```
@@ -49,17 +49,17 @@ answer to "what is a row"**, rather than picking one for you.
 
 The menu is not decoration: give a label back to `rows()` and you get that table.
 
-```python
-fathom.rows("thread.json", "an item of children")
+```r
+rows("thread.json", "an item of children")
 ```
 
 Deeper, when the thing you want is nested — the pipe reads as a sentence:
 
-```python
-(fathom.read_json("package.json")
-   >> fathom.into("versions")
-   >> fathom.into("dependencies")
-   >> fathom.rows("an entry of $[]"))
+```r
+read_json("package.json") |>
+  into("versions") |>
+  into("dependencies") |>
+  rows("an entry of $[]")
 ```
 
 ## Seven words, and that is the whole vocabulary
@@ -76,21 +76,29 @@ Deeper, when the thing you want is nested — the pipe reads as a sentence:
 `whichever("Rating", "rating")` takes the first spelling that is actually there,
 which is what a document written by more than one producer needs.
 
-**The same seven words, spelled the same way, work in R.** One engine answers
-both, so the two languages cannot drift apart. The pipe is the only difference.
+**The same seven words, spelled the same way, work in Python.** One engine
+answers both, so the two languages cannot drift apart.
 
 ## Installing
 
-```bash
-pip install fathom-json
+```r
+install.packages("fathom",
+  repos = c("https://psychometrician.r-universe.dev", "https://cloud.r-project.org"))
 ```
 
-**The distribution is `fathom-json` and the import is `fathom`.** The short name
-was taken on PyPI in 2011 by an unrelated project; every example and every
-chapter says `import fathom` regardless.
+That is a binary, with no toolchain to set up. Installing from the source tarball
+compiles the engine during installation, which takes a few seconds and needs
+[Rust](https://rustup.rs/); an install that can find no engine and no way to
+build one refuses, naming every place it looked, rather than succeeding into a
+package that cannot describe anything.
 
-The wheel carries the engine for your platform, so there is no toolchain to set
-up and **no dependencies at all**.
+The package has **no dependencies** and carries its own engine.
+
+## One name this package masks
+
+`find`. The vocabulary's `find` takes the word's everyday meaning, `utils::find`
+stays one `utils::` away, and loading the package says so once. The other six
+words shadow nothing.
 
 ## It samples, by default
 

@@ -1,5 +1,5 @@
 Package: fathom
-Title: See What is in a JSON Document Before You Parse It
+Title: Look Before You Parse
 Version: 0.0.1
 Authors@R:
     person("psychometrician", email = "psychometrician@gmail.com",
