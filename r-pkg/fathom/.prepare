@@ -128,4 +128,12 @@ if [ -f "${DEST}/.cargo/config.toml" ] && [ ! -d "${DEST}/vendor" ]; then
   exit 1
 fi
 
+# **`R CMD check` reports the vendored `.cargo-checksum.json` files as hidden
+# files, and that NOTE is the price of vendoring rather than a defect.** Do not
+# delete them to quieten it: cargo verifies every vendored crate against its
+# checksum and refuses to build without one, so removing them trades an
+# informational NOTE for a package that cannot compile on the farm at all.
+#
+# The sibling has no such NOTE because it vendors nothing — god-core declares no
+# runtime dependencies. fathom needs gzip, so it pays this.
 echo "* fathom/.prepare: staged $(du -sh "${DEST}" | cut -f1) into ${DEST}/"
