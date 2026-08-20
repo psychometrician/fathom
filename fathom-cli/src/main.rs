@@ -52,8 +52,38 @@ fn outln(s: &str) {
     emit(s, true);
 }
 
+// `--version` exists for the stale-engine problem, and nothing else can answer
+// it. **A hash cannot**: the engine an R install compiles at install time hashes
+// differently from the same sources built anywhere else, because the build path
+// travels inside the binary, so a hash separates a correct fresh build from a
+// wrong one no better than from a year-old one. **Agreeing output cannot
+// either**: the sibling project shipped an R package carrying a build one
+// version behind its three siblings, and every one of its twenty-five test
+// sentences still came out byte-identical. Two builds can agree completely on
+// the documents you happen to test.
+//
+// So the version is asked for directly, by `fathom-test`'s `versions.py`, of
+// each binding and of the engine that binding found.
+const USAGE: &str = "usage: fathom <probe|health|structure|rows|where> <file> [args]";
+
 fn main() {
     let args: Vec<String> = std::env::args().skip(1).collect();
+
+    // Handled before the flag loop, because both are questions about the
+    // program rather than about a document, and both used to be read as a FILE
+    // PATH — `fathom --version` reported `No such file or directory`. That was
+    // not merely unhelpful: two CI smoke tests ran `fathom --help | head -3`,
+    // which passes whatever `--help` does, since a pipeline reports the exit
+    // status of its LAST command. A check that cannot fail is not a check.
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        println!("fathom {}", env!("CARGO_PKG_VERSION"));
+        return;
+    }
+    if args.iter().any(|a| a == "--help" || a == "-h") {
+        println!("{USAGE}");
+        return;
+    }
+
     let mut json = false;
     // `--candidate <label>` asks for a row shape BY THE NAME THE REPORT PRINTED,
     // which is a different question from `rows <file> <path>` and deliberately
@@ -108,7 +138,7 @@ fn main() {
         [v, p, tail @ ..] => (*v, *p, tail),
         [p] => ("health", *p, &[][..]),
         _ => {
-            eprintln!("usage: fathom <probe|health|structure|rows|where> <file> [args]");
+            eprintln!("{USAGE}");
             std::process::exit(2);
         }
     };

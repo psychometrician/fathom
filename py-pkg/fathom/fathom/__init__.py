@@ -23,8 +23,27 @@ from pathlib import Path
 
 __all__ = [
     "read_json", "fathom", "into", "back", "find", "whichever", "rows",
-    "binary", "Report", "View", "FathomError",
+    "binary", "Report", "View", "FathomError", "__version__",
 ]
+
+# **The package's version, and it is here for the stale-engine problem.** It is
+# asked for beside the ENGINE's own `--version`, and a disagreement between the
+# two is the one symptom that neither a hash nor matching output can produce: a
+# hash differs between correct builds because the build path travels inside the
+# binary, and two engine builds can agree completely on the documents you happen
+# to test. The sibling shipped exactly that — one binding a version behind the
+# others, every test byte-identical — which is why this is asked directly.
+try:  # pragma: no cover - trivial, and depends on how the package was installed
+    from importlib.metadata import PackageNotFoundError, version as _pkg_version
+
+    try:
+        __version__ = _pkg_version("fathom-json")
+    except PackageNotFoundError:
+        # Running from a checkout rather than an install, which is the normal
+        # case for this repository's own harnesses.
+        __version__ = "0.0.0.dev"
+except ImportError:  # pragma: no cover - Python without importlib.metadata
+    __version__ = "0.0.0.dev"
 
 # Documents written from `text=` live until the process ends, which is the
 # same lifetime R's session temp directory gives them.

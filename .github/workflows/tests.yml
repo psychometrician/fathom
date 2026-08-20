@@ -54,7 +54,12 @@ jobs:
         run: |
           cargo build --release -p fathom-cli
           test -x target/release/fathom
-          ./target/release/fathom --help | head -3
+          # **Asserted, because the previous form could not fail.** This ran
+          # `fathom --help | head -3`, and `--help` was not a flag — the binary
+          # read it as a file path, printed an error and exited non-zero. A
+          # pipeline reports the status of its LAST command, so `head` succeeded
+          # and the step passed green while proving nothing.
+          ./target/release/fathom --version | grep -q '^fathom '
 
       # **There is deliberately no `cargo test` step, and that is not an
       # oversight.** The core carries zero `#[test]` blocks because its
