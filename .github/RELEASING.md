@@ -33,6 +33,42 @@ drift from the other two declarations, which `test/versions.py` currently
 forbids. **That decision is open and should be made deliberately rather than by
 drift.** It is the same one the sibling records as unmade.
 
+## Keeping r-universe at 8 OK, 1 FAIL
+
+**That is the target and it is achievable: eight platforms OK, and one expected
+FAIL.** Both siblings sit at WARNING on their eight; fathom reached clean on
+2026-08-20 and the things that got it there are easy to undo by accident, so they
+are listed.
+
+| what | why it matters |
+|---|---|
+| **`.prepare` does NOT vendor by default** | `cargo vendor` writes `.cargo-checksum.json` and `.cargo_vcs_info.json` beside each of the six crates — twelve dotfiles that `R CMD check` reports as hidden files. That was one NOTE on every platform, which the page rendered as **7 NOTE**. Turn vendoring on only with `FATHOM_VENDOR=1`, and only for a CRAN submission that needs an offline build |
+| **`.prepare` deletes `inst/bin` before staging** | otherwise a tarball built from a tree that was installed once carries the engine, and the check reports an undeclared executable — a WARNING |
+| **`Title:` is in R's title case, has no trailing period, and does not start with `fathom`** | all three are separate check complaints. `toTitleCase` treats short words like *is* as minor and wants them lowercase; the card renders `fathom - <Title>`, so a Title beginning with the package name reads the name twice |
+| **`man/figures/logo.png` exists** | not a check, but it is what puts the hex on the page. r-universe reads that path and nothing else |
+| **`r-pkg/fathom/README.md` exists** | r-universe renders the PACKAGE readme. Without one it falls back to the repository README, which is not written for somebody installing a package |
+| **GitHub repo topics are set** | the tags on the card are the repository's topics. Unset, r-universe shows only `rust` and `cargo`, which it derives from `Cargo.toml` and which say nothing about what fathom does |
+
+**`wasm-release` FAILs on purpose and must not be "fixed".** `configure` refuses
+a WebAssembly host up front, because R compiled to WebAssembly cannot start a
+subprocess and this package answers by running the engine as one. There is no
+engine that could be bundled for that target, so an install which appeared to
+succeed would produce a package that cannot describe anything. gog fails the same
+job for the same reason.
+
+**Two complaints appear locally and never on r-universe**, so do not chase them:
+`checkbashisms` is not installed on most developer machines, and *checking CRAN
+incoming feasibility* is a CRAN check that r-universe does not run.
+
+**Check the result rather than assume it**, because a push republishes without
+asking:
+
+```bash
+curl -s https://psychometrician.r-universe.dev/api/packages/fathom |
+  python3 -c "import json,sys;from collections import Counter;d=json.load(sys.stdin);\
+print(dict(Counter(j['check'] for j in d['_jobs'])))"
+```
+
 ## The three declarations
 
 The version is written by hand in three files and CI never assigns it:
