@@ -211,6 +211,12 @@ and a closing brace as the eyes and a colon as the nose. Its rose is measured
 rather than chosen — in CIELAB, gog's sand is hue 82 and god's slate is 254, and
 fathom takes 348, equidistant from both. **Three peers, not a progression.**
 
+## Contributing
+
+[`CONTRIBUTING.md`](CONTRIBUTING.md) has the rules most likely to be broken by
+accident, and why each one exists. [`CHANGELOG.md`](CHANGELOG.md) is what changed,
+written for somebody deciding whether to upgrade.
+
 ## License
 
 Apache 2.0.

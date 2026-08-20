@@ -67,6 +67,8 @@
 # `notes/CLAUDE.md`, so that Claude Code — which loads a working agreement only
 # from the project root — still finds it while the file itself stays private.
 !/README.md
+!/CHANGELOG.md
+!/CONTRIBUTING.md
 !/QUESTIONS.md
 !/LICENSE
 !/NOTICE
