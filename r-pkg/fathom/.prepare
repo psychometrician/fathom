@@ -24,15 +24,29 @@
 # configure error on every platform at once. A staging step that fails silently
 # is the same silent drop this project refuses everywhere else.
 #
-# **THERE IS SOMETHING TO VENDOR HERE, AND THE SIBLING HAD NOTHING.** god's
-# equivalent records that `god-core` declares no runtime dependencies at all, so
-# a vendoring step would copy nothing and prove nothing. fathom is not in that
-# position: it reads bytes off a disk and `04-gharchive` was unreadable for want
-# of gzip, so `flate2` is load-bearing. Vendored it is **six pure-Rust crates and
-# about 1.2 MB** — measured, not estimated — which buys a build that reaches the
-# network for nothing. That matters twice: a farm builder with a cold or absent
-# proxy still compiles, and CRAN's offline rule stays satisfiable later rather
-# than being foreclosed now by a decision nobody revisited.
+# **VENDORING IS OPT-IN, and the default is not to.** `FATHOM_VENDOR=1` turns it
+# on. There is something to vendor here where the sibling had nothing — god-core
+# declares no runtime dependencies, while fathom reads bytes off a disk and
+# `04-gharchive` was unreadable for want of gzip, so `flate2` is load-bearing.
+#
+# **It was on by default until 2026-08-20, and the cost was visible on the
+# package page.** `cargo vendor` writes a `.cargo-checksum.json` and a
+# `.cargo_vcs_info.json` beside every crate, `R CMD check` reports those twelve
+# dotfiles as hidden files, and r-universe showed the resulting NOTE once per
+# platform — seven of them, for a package whose checks were otherwise clean. The
+# checksums cannot simply be deleted: cargo verifies every vendored crate against
+# one and refuses to build without it.
+#
+# **What it buys, measured both ways**: vendored, a 325 KB tarball that compiles
+# with no network; unvendored, 96 KB, zero hidden files, zero NOTEs, and cargo
+# fetches one crate from crates.io. Both were built and installed and both answer
+# with 288 rows. r-universe's builders have a network, so the offline property is
+# insurance against a crates.io outage during a build rather than a requirement.
+#
+# **The capability stays because CRAN would need it.** CRAN builds offline, and
+# neither sibling is on CRAN so nothing needs it today — but a decision that
+# forecloses it should be reversible with a flag rather than by rediscovering
+# this file.
 #
 # Usage:  sh .prepare
 
@@ -96,7 +110,9 @@ else
   CARGO=""
 fi
 
-if [ -n "${CARGO}" ]; then
+if [ -z "${FATHOM_VENDOR}" ]; then
+  echo "* fathom/.prepare: not vendoring (set FATHOM_VENDOR=1 to)."
+elif [ -n "${CARGO}" ]; then
   mkdir -p "${DEST}/.cargo"
   ( cd "${DEST}" && "${CARGO}" vendor vendor ) > "${DEST}/.cargo/config.toml" 2>/dev/null || {
     echo "fathom/.prepare: cargo vendor failed — the staged build will need the network" >&2
