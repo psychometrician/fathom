@@ -6,6 +6,7 @@
 #
 # What runs, cheapest evidence first:
 #
+#   versions.py         the three hand-written version declarations agree
 #   check.py            the health verb over generated cases, both sides
 #   parity.py           the Rust core against `design/probe.py`, four stages
 #   pipe.py             every verb against a reader that stops reading
@@ -132,6 +133,12 @@ jobs:
             fi
           done
           echo "corpus: $(ls -d corpus/*/ | wc -l) entries, $missing without a committed source"
+
+      # Cheapest of the lot, and it guards the one number this repository writes
+      # by hand in three places. The household's rule is that CI never assigns a
+      # version and the only automation is a check that the declarations agree.
+      - name: The three version declarations agree
+        run: uv run test/versions.py
 
       - name: The health verb, both sides
         run: |
