@@ -48,6 +48,38 @@ time rather than quoting a number.
 
 ---
 
+## Install
+
+**R**, from r-universe, which builds a binary for every platform so no Rust is
+needed:
+
+```r
+install.packages("fathom",
+  repos = c("https://psychometrician.r-universe.dev", "https://cloud.r-project.org"))
+```
+
+> **If your R is a source-only build**, `install.packages` compiles rather than
+> fetching that binary, and compiling needs a Rust toolchain — the package
+> refuses with directions rather than installing something that cannot answer.
+> `getOption("pkgType")` says which you have; `"source"` is the case that needs
+> [rustup](https://rustup.rs/). This is a property of the R build rather than of
+> fathom, and the author's own machine is one of them, which is how it was found.
+
+**Python** is not published yet. Build a wheel from a checkout:
+
+```bash
+cargo build --release
+python -m build --wheel --outdir dist py-pkg/fathom
+pip install dist/*.whl
+```
+
+The distribution will be `fathom-json`, because `fathom` was taken on PyPI in
+2011 by an unrelated project. **The import is `fathom` either way**, so nothing
+you write against it changes if the shorter name is later claimed.
+
+**Neither package has a dependency**, and each carries the engine it needs — an
+installed copy is self-contained.
+
 ## The problem
 
 **With rectangular data you always know how to start.** A data.frame has already
