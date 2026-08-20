@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""The three version declarations agree, and nothing else assigns them.
+"""The manifests agree: three version declarations, and one description.
 
     uv run test/versions.py
 
@@ -92,6 +92,34 @@ def main():
 
     if problems:
         return 1
+
+    # **The description is the second thing written in two places.** R's
+    # `Description:` and Python's `description` are read by different registries
+    # and by different people, and there is no mechanism that keeps them equal —
+    # they simply drifted, and the R one still said "One verb" after the
+    # vocabulary reached seven words.
+    #
+    # The rule is the sibling's: Python's one-liner IS R's opening sentence, so
+    # the longer text may say more but cannot say something else. Compared with
+    # whitespace folded, because DESCRIPTION wraps at 80 and a TOML string does
+    # not, and a line break is not a disagreement.
+    import re as _re
+    desc_r = (ROOT / "r-pkg/fathom/DESCRIPTION").read_text()
+    m = _re.search(r"^Description:(.*?)(?=^\S+:)", desc_r, _re.M | _re.S)
+    r_open = " ".join(m.group(1).split()).split(".")[0].strip() if m else ""
+    desc_py = (ROOT / "py-pkg/fathom/pyproject.toml").read_text()
+    m2 = _re.search(r'^description\s*=\s*"([^"]+)"', desc_py, _re.M)
+    py_desc = " ".join(m2.group(1).split()).rstrip(".") if m2 else ""
+
+    if r_open != py_desc:
+        print("  THE DESCRIPTIONS DISAGREE")
+        print(f"    R opens with : {r_open}")
+        print(f"    Python says  : {py_desc}")
+        print()
+        print("  Python's description must be R's opening sentence. The R text")
+        print("  may go on to say more; it may not say something else.")
+        return 1
+    print(f"  and both describe it the same way, in {len(py_desc)} characters")
 
     # **`0.0.x` is not a mistake, and this says so rather than nagging.** While
     # the series stays here every release is a breaking change, because that is

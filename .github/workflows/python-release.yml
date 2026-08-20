@@ -1,0 +1,209 @@
+# Publish `fathom-json` to PyPI. Tag-gated, rehearsed first, and reviewable.
+#
+# **Nothing on `main` reaches PyPI.** A push builds wheels and uploads them as
+# artifacts; only a `py-v*` tag starts this file, and only the last job of it
+# uploads anything to the real index.
+#
+# Five jobs, each able to fail only forward:
+#
+#   1. version   the tag matches all three declarations, and PyPI does not
+#                already hold this number. Checked BEFORE anything is built,
+#                because discovering a mismatch at upload time spends the number
+#                on a failed release — a version cannot be reused on PyPI, ever.
+#   2. wheels    five platforms, each wheel carrying its own engine and each
+#                installed into a bare virtual environment and asked to describe
+#                a document before it counts as built. This calls
+#                `python-wheels.yml` rather than repeating its matrix, so the
+#                release builds with exactly the file that is tested on push.
+#   3. collect   five wheels and NO sdist.
+#   4. testpypi  the same artifacts against a real index, catching metadata
+#                problems while the number is still spendable.
+#   5. pypi      gated on a GitHub Environment with a required reviewer, because
+#                the upload is the one step that cannot be undone.
+#
+# **The upload uses Trusted Publishing.** The job asks GitHub for a short-lived
+# OIDC token, PyPI verifies it came from this repository running this workflow
+# file, and mints an upload token good for a few minutes. No credential is stored
+# anywhere.
+#
+# **DO NOT RENAME THIS FILE.** A trusted publisher binds to the filename, so a
+# rename silently invalidates the publisher registered against it and every
+# release fails at the last step until it is re-registered.
+#
+# **The publisher must exist on PyPI's side first**, and that half cannot be done
+# from here — it is registered in PyPI's web interface, naming the owner, this
+# repository, this filename, and the environment. Until it is, this workflow runs
+# green through four jobs and fails at the upload. `.github/RELEASING.md` has the
+# table of what to register where.
+
+name: python release
+
+on:
+  push:
+    tags: ["py-v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: the tag and the three declarations agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: One engine, one number
+        shell: bash
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          python3 - <<'PY'
+          import json, os, re, sys, urllib.error, urllib.request
+
+          tag = os.environ["TAG"]
+          m = re.fullmatch(r"py-v(.+)", tag)
+          if not m:
+              sys.exit(f"::error::tag {tag} is not py-v<version>")
+          want = m.group(1)
+
+          # The same three files `test/versions.py` reads. Repeated here rather
+          # than imported, because this job runs before any environment is set
+          # up and the check must not depend on one.
+          declarations = {
+              "Cargo.toml":
+                  r'\[workspace\.package\][^\[]*?version\s*=\s*"([^"]+)"',
+              "r-pkg/fathom/DESCRIPTION": r"^Version:\s*(\S+)",
+              "py-pkg/fathom/pyproject.toml":
+                  r'\[project\][^\[]*?version\s*=\s*"([^"]+)"',
+          }
+          bad = False
+          for path, pattern in declarations.items():
+              text = open(path).read()
+              found = re.search(pattern, text, re.M | re.S)
+              got = found.group(1) if found else "(unreadable)"
+              status = "ok" if got == want else "DISAGREES"
+              print(f"  {path:<32} {got:<12} {status}")
+              bad |= got != want
+          if bad:
+              sys.exit(f"::error::the tag says {want} and the tree does not agree")
+
+          # **Asked before anything is built.** PyPI never lets a version be
+          # reused, so a number spent on a failed release is spent for good.
+          url = "https://pypi.org/pypi/fathom-json/json"
+          try:
+              with urllib.request.urlopen(url, timeout=30) as r:
+                  releases = json.load(r).get("releases", {})
+              if want in releases:
+                  sys.exit(f"::error::PyPI already has fathom-json {want};"
+                           " that number cannot be reused")
+              print(f"  PyPI has {len(releases)} releases and not {want}")
+          except urllib.error.HTTPError as e:
+              if e.code == 404:
+                  print("  PyPI has no fathom-json yet — this is the first release")
+              else:
+                  raise
+          PY
+
+  wheels:
+    name: wheels
+    needs: version
+    uses: ./.github/workflows/python-wheels.yml
+
+  collect:
+    name: five wheels and no sdist
+    needs: wheels
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          pattern: wheel-*
+          path: dist
+          merge-multiple: true
+
+      - name: Check what is about to be uploaded
+        shell: bash
+        run: |
+          ls -l dist
+
+          # **An sdist would install for nobody.** `python -m build` packages
+          # `py-pkg/fathom/` alone, so `fathom-core` and `fathom-cli` sit ABOVE
+          # the tarball's root: `setup.py`'s walk-up finds no engine and
+          # `configure`'s equivalent does not exist on this side. pip would
+          # download it on any platform the wheels miss and fail on advice the
+          # user cannot follow. Better that pip says there is no build for their
+          # machine, which is true and actionable.
+          if compgen -G "dist/*.tar.gz" > /dev/null; then
+            echo "::error::an sdist reached the upload set; it is uninstallable by design"
+            exit 1
+          fi
+
+          # Named rather than counted, so a missing platform says which one.
+          # This list moves with the matrix in `python-wheels.yml`.
+          for tag in macosx_11_0_arm64 macosx_10_12_x86_64 \
+                     manylinux_2_28_x86_64 manylinux_2_28_aarch64 win_amd64; do
+            compgen -G "dist/*-$tag.whl" > /dev/null \
+              || { echo "::error::no wheel for $tag"; exit 1; }
+          done
+
+          # Every wheel must carry the engine. `python-wheels.yml` asserts this
+          # per platform, and it is asserted again over the assembled set,
+          # because this is the last moment before an irreversible upload.
+          python3 - <<'PY'
+          import glob, sys, zipfile
+          bad = 0
+          for w in sorted(glob.glob("dist/*.whl")):
+              names = zipfile.ZipFile(w).namelist()
+              carries = any(n.startswith("fathom/bin/fathom") for n in names)
+              print(f"  {'ok ' if carries else 'NO ENGINE'} {w}")
+              bad += not carries
+          sys.exit(bad and "::error::a wheel in the upload set carries no engine")
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: dist
+          path: dist/*.whl
+
+  testpypi:
+    name: rehearse on TestPyPI
+    needs: collect
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/project/fathom-json/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          # TestPyPI accumulates rehearsals, and a re-run of a tag would collide
+          # with its own earlier attempt. The real index below is deliberately
+          # not given this.
+          skip-existing: true
+
+  pypi:
+    name: publish to PyPI
+    needs: testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/fathom-json/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: dist
+          path: dist
+
+      # No `skip-existing`. If this number is already on PyPI the release should
+      # stop loudly rather than report success having uploaded nothing.
+      - uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # release/v1

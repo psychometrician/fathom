@@ -28,7 +28,7 @@ build-backend = "setuptools.build_meta"
 # reason.
 name = "fathom-json"
 version = "0.0.1"
-description = "See what is in a JSON document before you parse it"
+description = "One small vocabulary for seeing what is in a JSON document and getting a table out of it, spelled the same way in R and in Python"
 readme = "README.md"
 requires-python = ">=3.9"
 license = "Apache-2.0"

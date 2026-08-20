@@ -4,13 +4,15 @@ Version: 0.0.1
 Authors@R:
     person("psychometrician", email = "psychometrician@gmail.com",
            role = c("aut", "cre"))
-Description: One verb that describes an unknown JSON document: whether it is
-    sound, what shapes it holds, and what one row could be, with each candidate
-    priced. Output is proportional to the structure rather than to the data, so
-    a 912 MB file and a 12 KB file produce descriptions of similar size. This
-    package is a thin wrapper around the 'fathom' command-line engine, which it
-    invokes as a subprocess. The engine is compiled and bundled into the package
-    at install time, so an installed copy is self-contained.
+Description: One small vocabulary for seeing what is in a JSON document and
+    getting a table out of it, spelled the same way in R and in Python. You
+    point it at a document you have never seen and it reports whether the file
+    is sound, what shapes it holds, and what one row could be, with every
+    candidate priced. Output is proportional to the structure rather than to
+    the data, so a 912 MB file and a 12 KB file produce descriptions of similar
+    size. The package is a thin wrapper around the 'fathom' engine, which it
+    invokes as a subprocess; the engine is compiled and bundled at install
+    time, so an installed copy is self-contained and needs nothing else.
 License: Apache License (>= 2)
 Encoding: UTF-8
 SystemRequirements: Cargo (Rust's package manager), rustc
